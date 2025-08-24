@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@plugin '../../hero.ts';
+@source '../../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
+
+@layer reset, base, components, utilities;
+
+@theme {
+  --font-*: initial;
+  --font-outfit: Outfit, sans-serif;
+
+  --breakpoint-*: initial;
+  --breakpoint-sm: 375px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1280px;
+  --breakpoint-xl: 1536px;
+
+  --text-title-2xl: 72px;
+  --text-title-2xl--line-height: 90px;
+  --text-title-xl: 60px;
+  --text-title-xl--line-height: 72px;
+  --text-title-lg: 48px;
+  --text-title-lg--line-height: 60px;
+  --text-title-md: 36px;
+  --text-title-md--line-height: 44px;
+  --text-title-sm: 30px;
+  --text-title-sm--line-height: 38px;
+
+  --color-white: #ffffff;
+  --color-black: #222222;
+
+  --color-primary-100: #FEEBE2;
+  --color-primary-200: #FCC5C0;
+  --color-primary-300: #FA9FB5;
+  --color-primary-400: #F768A1;
+  --color-primary-500: #C51B8A;
+  --color-primary-600: #7A0177;
+
+  --color-secondary-100: #B0F2BC;
+  --color-secondary-200: #89E8Ac;
+  --color-secondary-300: #67DBA5;
+  --color-secondary-400: #4CC8A3;
+  --color-secondary-500: #38B2A3;
+  --color-secondary-600: #2C98A0;
+
+  --color-blue-100: #f9FCFF;
+  --color-blue-200: #E7F1FF;
+  --color-blue-300: #D0E3FF;
+  --color-blue-400: #7096D1;
+  --color-blue-500: #334EAC;
+  --color-blue-600: #081F5C;
+
+  --color-success-500: #12b76a;
+
+  --color-info-500: #25cff2;
+
+  --color-warning-500: #f79009;
+
+  --color-error-500: #f04438;
+}
+
+:root {}
+
+@layer base {}
