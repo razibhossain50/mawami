@@ -345,39 +345,6 @@ export const BiodataSearch = () => {
     };
 
 
-
-
-    if (error) {
-        return (
-            <div className="space-y-8">
-                <div className="text-center space-y-4">
-                    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
-                        All Biodatas
-                    </h1>
-                    <p className="text-gray-600 text-lg">Discover and connect with verified profiles</p>
-                </div>
-                <div className="text-center py-20">
-                    <Card className="max-w-md mx-auto bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-                        <CardBody className="text-center p-8">
-                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <User className="h-8 w-8 text-red-500" />
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Oops! Something went wrong</h3>
-                            <p className="text-red-600 mb-6">{error}</p>
-                            <Button
-                                color="primary"
-                                onPress={() => window.location.reload()}
-                                className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600"
-                            >
-                                Try Again
-                            </Button>
-                        </CardBody>
-                    </Card>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-8 pt-20 bg-[url('/images/hero-bg.png')] bg-no-repeat bg-center bg-cover">
             <div className="container max-w-7xl mx-auto py-24 space-y-8">
@@ -650,52 +617,78 @@ export const BiodataSearch = () => {
                         ))}
                     </div>
                 ) : (
-                    <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-                        <CardBody className="text-center py-16">
-                            <div className="relative">
-                                {/* Decorative background */}
-                                <div className="absolute inset-0 opacity-5">
-                                    <div className="absolute top-4 left-4 text-4xl">💕</div>
-                                    <div className="absolute top-8 right-8 text-3xl">✨</div>
-                                    <div className="absolute bottom-4 left-8 text-3xl">💑</div>
-                                    <div className="absolute bottom-8 right-4 text-4xl">🌟</div>
-                                </div>
+                                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+                                    <CardBody className="text-center py-16">
+                                        <div className="relative">
+                                            {/* Decorative background */}
+                                            <div className="absolute inset-0 opacity-5">
+                                                <div className="absolute top-4 left-4 text-4xl">💕</div>
+                                                <div className="absolute top-8 right-8 text-3xl">✨</div>
+                                                <div className="absolute bottom-4 left-8 text-3xl">💑</div>
+                                                <div className="absolute bottom-8 right-4 text-4xl">🌟</div>
+                                            </div>
+                                            {!error ? (
+                                                <div className="relative z-10">
+                                                    <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                                        <User className="h-12 w-12 text-rose-500" />
+                                                    </div>
+                                                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No Perfect Matches Found</h3>
+                                                    <p className="text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">
+                                                        Don&apos;t worry! Your soulmate might be just around the corner. Try adjusting your search filters or check back later for new profiles.
+                                                    </p>
 
-                                <div className="relative z-10">
-                                    <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                                        <User className="h-12 w-12 text-rose-500" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-3">No Perfect Matches Found</h3>
-                                    <p className="text-gray-600 mb-6 max-w-md mx-auto leading-relaxed">
-                                        Don&apos;t worry! Your soulmate might be just around the corner. Try adjusting your search filters or check back later for new profiles.
-                                    </p>
+                                                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                                                        <Button
+                                                            className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                                                            onPress={() => {
+                                                                setSelectedGender("");
+                                                                setSelectedMaritalStatus("");
+                                                                setSelectedLocation("");
+                                                                setBiodataNumber("");
+                                                            }}
+                                                            startContent={<Search className="h-4 w-4" />}
+                                                        >
+                                                            Clear All Filters
+                                                        </Button>
+                                                        <Button
+                                                            variant="flat"
+                                                            className="bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-200"
+                                                            onPress={fetchBiodatas}
+                                                            startContent={<Sparkles className="h-4 w-4" />}
+                                                        >
+                                                            Refresh Profiles
+                                                        </Button>
+                                                    </div>
+                                                </div>
 
-                                    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                                        <Button
-                                            className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                                            onPress={() => {
-                                                setSelectedGender("");
-                                                setSelectedMaritalStatus("");
-                                                setSelectedLocation("");
-                                                setBiodataNumber("");
-                                            }}
-                                            startContent={<Search className="h-4 w-4" />}
-                                        >
-                                            Clear All Filters
-                                        </Button>
-                                        <Button
-                                            variant="flat"
-                                            className="bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-200"
-                                            onPress={fetchBiodatas}
-                                            startContent={<Sparkles className="h-4 w-4" />}
-                                        >
-                                            Refresh Profiles
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardBody>
-                    </Card>
+                                            ) : (
+                                                    <div className="space-y-8">
+                                                        <div className="text-center space-y-4">
+                                                            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
+                                                                All Biodatas
+                                                            </h1>
+                                                            <p className="text-gray-600 text-lg">Discover and connect with verified profiles</p>
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                <User className="h-8 w-8 text-red-500" />
+                                                            </div>
+                                                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Oops! Something went wrong</h3>
+                                                            <p className="text-red-600 mb-6">{error}</p>
+                                                            <Button
+                                                                color="primary"
+                                                                onPress={() => window.location.reload()}
+                                                                className="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600"
+                                                            >
+                                                                Try Again
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                            )
+                                            }
+                                        </div>
+                                    </CardBody>
+                                </Card>
                 )}
 
                 {/* Pagination */}
