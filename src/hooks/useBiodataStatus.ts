@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BiodataApprovalStatus, BiodataVisibilityStatus } from '@/types/biodata';
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
 
 interface BiodataStatusInfo {
   id?: number;
@@ -56,7 +58,8 @@ export const useBiodataStatus = (): UseBiodataStatusReturn => {
         try {
           biodata = JSON.parse(text);
         } catch (parseError) {
-          console.error('Error parsing biodata response:', parseError);
+          const appError = handleApiError(parseError, 'Component');
+            logger.error('Error parsing biodata response', appError, 'UseBiodataStatus');
           setStatusInfo(null);
           return;
         }
@@ -78,7 +81,8 @@ export const useBiodataStatus = (): UseBiodataStatusReturn => {
         setStatusInfo(null);
       }
     } catch (err) {
-      console.error('Error fetching biodata status:', err);
+      const appError = handleApiError(err, 'Component');
+            logger.error('Error fetching biodata status', appError, 'UseBiodataStatus');
       setError(err instanceof Error ? err.message : 'Failed to fetch biodata status');
     } finally {
       setLoading(false);

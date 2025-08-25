@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useRegularAuth } from '@/context/RegularAuthContext';
 import { Card, CardBody, Spinner } from '@heroui/react';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
 
 function GoogleCallbackContent() {
   const router = useRouter();
@@ -48,7 +50,8 @@ function GoogleCallbackContent() {
         }, 2000);
 
       } catch (error) {
-        console.error('Google auth callback error:', error);
+        const appError = handleApiError(error, 'Component');
+            logger.error('Google auth callback error', appError, 'Page');
         setStatus('error');
         setMessage('Failed to complete Google authentication. Please try again.');
         

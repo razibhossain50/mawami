@@ -8,6 +8,9 @@ import {
 } from "@heroui/react";
 import { Plus, EllipsisVertical, Search, ChevronDown, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { adminApi } from '@/lib/api-client';
 
 type IconSvgProps = SVGProps<SVGSVGElement> & {
     size?: number;
@@ -150,40 +153,33 @@ export default function Biodatas() {
 
         try {
             setIsUpdatingStatus(true);
-            // Get admin authentication token
-            const token = localStorage.getItem('admin_user_access_token');
+            logger.info('Updating biodata status', { 
+                biodataId: selectedBiodata.id, 
+                oldStatus: selectedBiodata.biodataApprovalStatus, 
+                newStatus 
+            }, 'AdminBiodatas');
 
-            if (!token) {
-                console.error('No authentication token found');
-                return;
-            }
+            await adminApi.put(`/biodatas/${selectedBiodata.id}/approval-status`, { status: newStatus });
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/biodatas/${selectedBiodata.id}/approval-status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ status: newStatus }),
-            });
-
-            if (response.ok) {
-                // Update local state
-                setBiodatas(prev => prev.map(biodata =>
-                    biodata.id === selectedBiodata.id
-                        ? { ...biodata, biodataApprovalStatus: newStatus }
-                        : biodata
-                ));
-                // Update the selected biodata to reflect the change
-                setSelectedBiodata(prev => prev ? { ...prev, biodataApprovalStatus: newStatus } : null);
-                // Close the modal after successful update
-                setViewModalOpen(false);
-            } else {
-                const errorText = await response.text();
-                console.error('Failed to update status:', response.status, errorText);
-            }
+            // Update local state
+            setBiodatas(prev => prev.map(biodata =>
+                biodata.id === selectedBiodata.id
+                    ? { ...biodata, biodataApprovalStatus: newStatus }
+                    : biodata
+            ));
+            // Update the selected biodata to reflect the change
+            setSelectedBiodata(prev => prev ? { ...prev, biodataApprovalStatus: newStatus } : null);
+            // Close the modal after successful update
+            setViewModalOpen(false);
+            
+            logger.info('Biodata status updated successfully', { 
+                biodataId: selectedBiodata.id, 
+                newStatus 
+            }, 'AdminBiodatas');
         } catch (error) {
-            console.error('Error updating status:', error);
+            const appError = handleApiError(error, 'AdminBiodatas');
+            logger.error('Failed to update biodata status', appError, 'AdminBiodatas');
+            setError(appError.message);
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -195,33 +191,20 @@ export default function Biodatas() {
 
         try {
             setIsDeleting(true);
-            // Get admin authentication token
-            const token = localStorage.getItem('admin_user_access_token');
+            logger.info('Deleting biodata', { biodataId: selectedBiodata.id }, 'AdminBiodatas');
 
-            if (!token) {
-                console.error('No authentication token found');
-                return;
-            }
+            await adminApi.delete(`/biodatas/${selectedBiodata.id}`);
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/biodatas/${selectedBiodata.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                // Remove from local state
-                setBiodatas(prev => prev.filter(biodata => biodata.id !== selectedBiodata.id));
-                setDeleteModalOpen(false);
-                setSelectedBiodata(null);
-            } else {
-                const errorText = await response.text();
-                console.error('Failed to delete biodata:', response.status, errorText);
-            }
+            // Remove from local state
+            setBiodatas(prev => prev.filter(biodata => biodata.id !== selectedBiodata.id));
+            setDeleteModalOpen(false);
+            setSelectedBiodata(null);
+            
+            logger.info('Biodata deleted successfully', { biodataId: selectedBiodata.id }, 'AdminBiodatas');
         } catch (error) {
-            console.error('Error deleting biodata:', error);
+            const appError = handleApiError(error, 'AdminBiodatas');
+            logger.error('Failed to delete biodata', appError, 'AdminBiodatas');
+            setError(appError.message);
         } finally {
             setIsDeleting(false);
         }
@@ -232,37 +215,16 @@ export default function Biodatas() {
         const fetchBiodatas = async () => {
             try {
                 setLoading(true);
-                // Get admin authentication token
-                const token = localStorage.getItem('admin_user_access_token');
+                logger.debug('Fetching all biodatas for admin', undefined, 'AdminBiodatas');
 
-                if (!token) {
-                    setError('No authentication token found. Please login as admin.');
-                    setLoading(false);
-                    return;
-                }
-
-                console.log('Using token for admin API:', token ? 'Token found' : 'No token');
-
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/biodatas/admin/all`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    }
-                });
-
-                console.log('Admin API response status:', response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setBiodatas(data);
-                } else {
-                    const errorText = await response.text();
-                    console.error('Admin API error:', errorText);
-                    setError(`Failed to fetch biodatas - ${response.status}: ${response.statusText}`);
-                }
+                const data = await adminApi.get('/biodatas/admin/all') as Biodata[];
+                setBiodatas(data);
+                
+                logger.info('Biodatas fetched successfully', { count: data.length }, 'AdminBiodatas');
             } catch (err) {
-                setError('Error fetching biodatas');
-                console.error('Error fetching biodatas:', err);
+                const appError = handleApiError(err, 'AdminBiodatas');
+                logger.error('Failed to fetch biodatas', appError, 'AdminBiodatas');
+                setError(appError.message);
             } finally {
                 setLoading(false);
             }

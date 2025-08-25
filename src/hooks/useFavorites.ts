@@ -1,23 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRegularAuth } from '@/context/RegularAuthContext';
-
-interface FavoriteItem {
-  id: number;
-  biodata: {
-    id: number;
-    fullName: string;
-    profilePicture?: string;
-    age: number;
-    biodataType: string;
-    profession: string;
-    presentDivision?: string;
-    presentZilla?: string;
-    maritalStatus: string;
-    height: string;
-    complexion?: string;
-  };
-  createdAt: string;
-}
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { favoritesService } from '@/lib/api-services';
+import { FavoritesResponse, FavoriteItem } from '@/types/api';
 
 export const useFavorites = () => {
   const { user, isAuthenticated } = useRegularAuth();
@@ -37,24 +23,17 @@ export const useFavorites = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      logger.debug('Fetching user favorites', { userId: user.id }, 'useFavorites');
 
-      const token = getAuthToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch favorites');
-      }
-
-      const data = await response.json();
+      const data = await favoritesService.getFavorites();
       setFavorites(data.data || []);
+      
+      logger.info('Favorites fetched successfully', { count: data.data?.length || 0 }, 'useFavorites');
     } catch (error) {
-      console.error('Error fetching favorites:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load favorites');
+      const appError = handleApiError(error, 'useFavorites');
+      logger.error('Error fetching favorites', appError, 'useFavorites');
+      setError(appError.message);
     } finally {
       setLoading(false);
     }
@@ -69,29 +48,21 @@ export const useFavorites = () => {
 
     try {
       setError(null);
+      logger.info('Adding biodata to favorites', { biodataId, userId: user.id }, 'useFavorites');
 
-      const token = getAuthToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites/${biodataId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 409) {
-          throw new Error('Already in favorites');
-        }
-        throw new Error(errorData.message || 'Failed to add to favorites');
-      }
-
-      // Successfully added to favorites
+      await favoritesService.addToFavorites(biodataId);
+      
+      logger.info('Biodata added to favorites successfully', { biodataId }, 'useFavorites');
       return true;
     } catch (error) {
-      console.error('Error adding to favorites:', error);
-      setError(error instanceof Error ? error.message : 'Failed to add to favorites');
+      const appError = handleApiError(error, 'useFavorites');
+      logger.error('Error adding to favorites', appError, 'useFavorites');
+      
+      if (appError.statusCode === 409) {
+        setError('Already in favorites');
+      } else {
+        setError(appError.message);
+      }
       return false;
     }
   };
@@ -102,26 +73,19 @@ export const useFavorites = () => {
 
     try {
       setError(null);
+      logger.info('Removing biodata from favorites', { biodataId, userId: user.id }, 'useFavorites');
 
-      const token = getAuthToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites/${biodataId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to remove from favorites');
-      }
+      await favoritesService.removeFromFavorites(biodataId);
 
       // Update local state immediately
       setFavorites(prev => prev.filter(fav => fav.biodata.id !== biodataId));
+      
+      logger.info('Biodata removed from favorites successfully', { biodataId }, 'useFavorites');
       return true;
     } catch (error) {
-      console.error('Error removing from favorites:', error);
-      setError(error instanceof Error ? error.message : 'Failed to remove from favorites');
+      const appError = handleApiError(error, 'useFavorites');
+      logger.error('Error removing from favorites', appError, 'useFavorites');
+      setError(appError.message);
       return false;
     }
   };
@@ -131,22 +95,11 @@ export const useFavorites = () => {
     if (!isAuthenticated || !user) return false;
 
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites/check/${biodataId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        return false;
-      }
-
-      const data = await response.json();
+      const data = await favoritesService.checkFavorite(biodataId);
       return data.isFavorite || false;
     } catch (error) {
-      console.error('Error checking favorite status:', error);
+      const appError = handleApiError(error, 'useFavorites');
+      logger.error('Error checking favorite status', appError, 'useFavorites');
       return false;
     }
   };
@@ -156,22 +109,11 @@ export const useFavorites = () => {
     if (!isAuthenticated || !user) return 0;
 
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites/count`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        return 0;
-      }
-
-      const data = await response.json();
+      const data = await favoritesService.getFavoriteCount();
       return data.count || 0;
     } catch (error) {
-      console.error('Error getting favorite count:', error);
+      const appError = handleApiError(error, 'useFavorites');
+      logger.error('Error getting favorite count', appError, 'useFavorites');
       return 0;
     }
   };

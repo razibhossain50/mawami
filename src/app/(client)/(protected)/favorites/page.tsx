@@ -6,6 +6,9 @@ import {
 } from "@heroui/react";
 import { Heart, Eye, Star, Search, Sparkles, User, ArrowLeft, Filter, Copy, Trash2, ExternalLink } from "lucide-react";
 import { useRegularAuth } from "@/context/RegularAuthContext";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { userApi } from '@/lib/api-client';
 
 interface Biodata {
     id: number;
@@ -70,19 +73,7 @@ export default function FavoritesPage() {
                 setLoading(true);
                 setError(null);
 
-                const token = localStorage.getItem('regular_user_access_token');
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch favorites');
-                }
-
-                const data = await response.json();
+                const data = await userApi.get('/favorites') as { data: FavoriteApiResponse[] };
                 const favoritesData = data.data || [];
 
                 // Transform the API response to match our interface
@@ -109,7 +100,8 @@ export default function FavoritesPage() {
                 setFavorites(transformedFavorites);
                 setFilteredFavorites(transformedFavorites);
             } catch (error) {
-                console.error('Error fetching favorites:', error);
+                const appError = handleApiError(error, 'FavoritesPage');
+                logger.error('Error fetching favorites', appError, 'FavoritesPage');
                 setError('Failed to load your favorite profiles');
             } finally {
                 setLoading(false);
@@ -138,24 +130,14 @@ export default function FavoritesPage() {
         if (!isAuthenticated || !user) return;
 
         try {
-            const token = localStorage.getItem('regular_user_access_token');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/favorites/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to remove from favorites');
-            }
+            await userApi.delete(`/favorites/${id}`);
 
             // Update local state immediately
             setFavorites(prev => prev.filter(fav => fav.id !== id));
             setFilteredFavorites(prev => prev.filter(fav => fav.id !== id));
         } catch (error) {
-            console.error('Error removing from favorites:', error);
+            const appError = handleApiError(error, 'FavoritesPage');
+            logger.error('Error removing from favorites', appError, 'FavoritesPage');
             // You can add a toast notification here
         }
     };
@@ -165,9 +147,10 @@ export default function FavoritesPage() {
         try {
             await navigator.clipboard.writeText(link);
             // You can add a toast notification here
-            console.log('Link copied to clipboard');
+            logger.debug('Link copied to clipboard', undefined, 'FavoritesPage');
         } catch (err) {
-            console.error('Failed to copy link:', err);
+            const appError = handleApiError(err, 'FavoritesPage');
+            logger.error('Failed to copy link', appError, 'FavoritesPage');
         }
     };
 

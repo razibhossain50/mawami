@@ -10,6 +10,9 @@ import { LocationSelector } from "@/components/form/LocationSelector";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useRegularAuth } from "@/context/RegularAuthContext";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
+import { publicApi } from "@/lib/api-client";
+import { handleApiError } from "@/lib/error-handler";
 
 interface Biodata {
     id: number;
@@ -60,20 +63,19 @@ export const BiodataSearch = () => {
     const fetchBiodatas = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/biodatas`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch biodatas');
-            }
-
-            const data = await response.json();
+            logger.debug('Fetching biodatas', undefined, 'BiodataSearch');
+            
+            const data = await publicApi.get('/biodatas');
             // Handle both single object and array responses
             const biodatasArray = Array.isArray(data) ? data : [data];
             setBiodatas(biodatasArray);
             setError(null);
+            
+            logger.info('Successfully fetched biodatas', { count: biodatasArray.length }, 'BiodataSearch');
         } catch (error) {
-            console.error('Error fetching biodatas:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load biodatas');
+            const appError = handleApiError(error, 'BiodataSearch');
+            logger.error('Failed to fetch biodatas', appError, 'BiodataSearch');
+            setError(appError.message);
         } finally {
             setLoading(false);
         }
@@ -91,9 +93,10 @@ export const BiodataSearch = () => {
     const filteredBiodatas = useMemo(() => {
         if (!hasSearched) return [];
 
-        console.log('🔍 FILTERING BIODATAS');
-        console.log('📊 Total biodatas to filter:', biodatas.length);
-        console.log('🎯 Active filters:', searchFilters);
+        logger.debug('Filtering biodatas', {
+            totalBiodatas: biodatas.length,
+            activeFilters: searchFilters
+        }, 'BiodataSearch');
 
         const filtered = biodatas.filter(biodata => {
             // Gender filter - use the search filters, not current form state
@@ -107,14 +110,14 @@ export const BiodataSearch = () => {
             // Location filter - use the search filters, not current form state
             const matchesLocation = (() => {
                 if (!searchFilters.location || searchFilters.location === '') {
-                    console.log('🔍 Location Filter: No location filter applied - showing all');
+                    logger.debug('Location filter: No location filter applied', undefined, 'BiodataSearch');
                     return true; // No location filter applied
                 }
 
                 // Parse the hierarchical location string (e.g., "Bangladesh > Dhaka > All Districts")
                 const locationParts = searchFilters.location.split(' > ').map(part => part.trim());
                 
-                console.log('🔍 Location Filter Debug:', {
+                logger.debug('Location filter debug', {
                     searchLocation: searchFilters.location,
                     locationParts: locationParts,
                     biodataId: biodata.id,
@@ -132,7 +135,7 @@ export const BiodataSearch = () => {
                 
                 // If "All Divisions" is selected, show all biodatas from Bangladesh
                 if (locationParts.includes('All Divisions')) {
-                    console.log('✅ All Divisions selected - showing all biodatas');
+                    logger.debug('All Divisions selected - showing all biodatas', undefined, 'BiodataSearch');
                     return true; // Show all biodatas when "All Divisions" is selected
                 }
                 
@@ -142,7 +145,7 @@ export const BiodataSearch = () => {
                     const divisionMatch = biodata.presentDivision?.toLowerCase().includes(selectedDivision.toLowerCase()) ||
                            biodata.permanentDivision?.toLowerCase().includes(selectedDivision.toLowerCase());
                     
-                    console.log(`🔍 All Districts for division "${selectedDivision}":`, {
+                    logger.debug(`All Districts for division "${selectedDivision}"`, {
                         match: divisionMatch,
                         presentDivision: biodata.presentDivision,
                         permanentDivision: biodata.permanentDivision
@@ -157,7 +160,7 @@ export const BiodataSearch = () => {
                     const districtMatch = biodata.presentZilla?.toLowerCase().includes(selectedDistrict.toLowerCase()) ||
                            biodata.permanentZilla?.toLowerCase().includes(selectedDistrict.toLowerCase());
                     
-                    console.log(`🔍 All Upazilas for district "${selectedDistrict}":`, {
+                    logger.debug(`All Upazilas for district "${selectedDistrict}"`, {
                         match: districtMatch,
                         presentZilla: biodata.presentZilla,
                         permanentZilla: biodata.permanentZilla
@@ -186,7 +189,7 @@ export const BiodataSearch = () => {
                     
                     const hierarchicalMatch = divisionMatch && districtMatch && upazilaMatch;
                     
-                    console.log(`🔍 Specific location "${selectedUpazila}" in "${selectedDistrict}", "${selectedDivision}":`, {
+                    logger.debug(`Specific location "${selectedUpazila}" in "${selectedDistrict}", "${selectedDivision}"`, {
                         hierarchicalMatch,
                         divisionMatch,
                         districtMatch,
@@ -222,7 +225,7 @@ export const BiodataSearch = () => {
                            biodata.permanentDivision?.toLowerCase().includes(part.toLowerCase()))
                        );
                 
-                console.log('🔍 Broad location match:', {
+                logger.debug('Broad location match', {
                     match: broadMatch,
                     searchTerm,
                     locationParts: locationParts.filter(part => part !== 'Bangladesh')
@@ -237,7 +240,7 @@ export const BiodataSearch = () => {
 
             const finalMatch = matchesGender && matchesMaritalStatus && matchesLocation && matchesBiodataNumber;
             
-            console.log(`🎯 Biodata ${biodata.id} Filter Results:`, {
+            logger.debug(`Biodata ${biodata.id} filter results`, {
                 gender: matchesGender,
                 maritalStatus: matchesMaritalStatus,
                 location: matchesLocation,
@@ -248,8 +251,7 @@ export const BiodataSearch = () => {
             return finalMatch;
         });
         
-        console.log('✅ FILTERING COMPLETE');
-        console.log('📈 Results:', {
+        logger.info('Filtering complete', {
             totalBiodatas: biodatas.length,
             filteredCount: filtered.length,
             filterEfficiency: `${((filtered.length / biodatas.length) * 100).toFixed(1)}%`
@@ -275,7 +277,8 @@ export const BiodataSearch = () => {
                     const status = await isFavorite(biodata.id);
                     statuses[biodata.id] = status;
                 } catch (error) {
-                    console.error(`Error checking favorite status for biodata ${biodata.id}:`, error);
+                    const appError = handleApiError(error, 'BiodataSearch');
+                    logger.error(`Error checking favorite status for biodata ${biodata.id}`, appError, 'BiodataSearch');
                     statuses[biodata.id] = false;
                 }
             }
@@ -309,7 +312,8 @@ export const BiodataSearch = () => {
                 }
             }
         } catch (error) {
-            console.error('Error toggling favorite:', error);
+            const appError = handleApiError(error, 'BiodataSearch');
+            logger.error('Error toggling favorite', appError, 'BiodataSearch');
         } finally {
             setFavoriteLoading(prev => ({ ...prev, [biodataId]: false }));
         }
@@ -329,15 +333,16 @@ export const BiodataSearch = () => {
             biodataNumber: biodataNumber
         };
         
-        console.log('🔍 BIODATA SEARCH STARTED');
-        console.log('📋 Search Filters Applied:', filters);
-        console.log('📍 Location Selection Details:', {
-            rawLocation: selectedLocation,
-            locationParts: selectedLocation ? selectedLocation.split(' > ').map(part => part.trim()) : [],
-            hasAllDivisions: selectedLocation?.includes('All Divisions'),
-            hasAllDistricts: selectedLocation?.includes('All Districts'),
-            hasAllUpazilas: selectedLocation?.includes('All Upazilas')
-        });
+        logger.info('Biodata search started', {
+            filters,
+            locationDetails: {
+                rawLocation: selectedLocation,
+                locationParts: selectedLocation ? selectedLocation.split(' > ').map(part => part.trim()) : [],
+                hasAllDivisions: selectedLocation?.includes('All Divisions'),
+                hasAllDistricts: selectedLocation?.includes('All Districts'),
+                hasAllUpazilas: selectedLocation?.includes('All Upazilas')
+            }
+        }, 'BiodataSearch');
         
         setSearchFilters(filters);
         setHasSearched(true);

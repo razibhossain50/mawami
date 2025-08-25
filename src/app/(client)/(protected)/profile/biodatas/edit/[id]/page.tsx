@@ -13,6 +13,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useRef, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
 
 const steps = [
     { title: "Personal Information", subtitle: "Basic details about you" },
@@ -129,7 +131,8 @@ export default function BiodataForm() {
             nextStep();
         },
         onError: (error: unknown) => {
-            console.error("saveStepMutation error:", error);
+            const stepError = handleApiError(error, 'BiodataEdit');
+            logger.error('saveStepMutation error', stepError, 'BiodataEdit');
             // No toast for step save errors - user will see validation errors in the form
         },
     });
@@ -169,7 +172,8 @@ export default function BiodataForm() {
             }, 2000);
         },
         onError: (error: unknown) => {
-            console.error("submitMutation.onError called with:", error);
+            const submitError = handleApiError(error, 'BiodataEdit');
+            logger.error('submitMutation.onError called with', submitError, 'BiodataEdit');
             const errorMessage = (error as Error)?.message ||
                 (isCreateMode ? "Failed to create biodata. Please try again." : "Failed to update biodata. Please try again.");
             addToast({
@@ -221,7 +225,8 @@ export default function BiodataForm() {
         try {
             await submitMutation.mutateAsync(formData);
         } catch (error) {
-            console.error("Submission error:", error);
+            const submissionError = handleApiError(error, 'BiodataEdit');
+            logger.error('Submission error', submissionError, 'BiodataEdit');
             // Error is handled by the mutation's onError
         }
     };

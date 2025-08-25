@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardBody, Switch, Button, Chip, Spinner } from "@heroui/react";
 import { Eye, EyeOff, AlertCircle, Shield, RefreshCw } from "lucide-react";
 import { BiodataApprovalStatus, BiodataVisibilityStatus, BIODATA_STATUS_COLORS } from "@/types/biodata";
+import { logger } from '@/lib/logger';
+import { userApi } from '@/lib/api-client';
+import { handleApiError } from '@/lib/error-handler';
 
 interface BiodataStatusToggleProps {
   biodataId?: number;
@@ -66,8 +69,9 @@ export const BiodataStatusToggle: React.FC<BiodataStatusToggleProps> = ({
         setError(result.message || 'Failed to toggle visibility');
       }
     } catch (error) {
-      console.error('Error toggling biodata visibility:', error);
-      setError(error instanceof Error ? error.message : 'Failed to toggle visibility');
+      const appError = handleApiError(error, 'BiodataStatusToggle');
+      logger.error('Error toggling biodata visibility', appError, 'BiodataStatusToggle');
+      setError(appError.message);
     } finally {
       setIsToggling(false);
     }

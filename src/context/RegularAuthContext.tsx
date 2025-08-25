@@ -2,13 +2,10 @@
 
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-
-interface User {
-  id: number
-  fullName: string
-  email: string
-  role: string
-}
+import { logger } from '@/lib/logger'
+import { authService } from '@/lib/api-services'
+import { handleApiError } from '@/lib/error-handler'
+import { User, LoginResponse } from '@/types/api'
 
 interface RegularAuthContextType {
   user: User | null
@@ -36,7 +33,8 @@ export const RegularAuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           setUser(JSON.parse(userData))
         } catch (error) {
-          console.error('Failed to parse user data', error)
+          const appError = handleApiError(error, 'RegularAuthContext')
+          logger.error('Failed to parse user data', appError, 'RegularAuthContext')
           // Clear invalid data instead of calling logout
           localStorage.removeItem('regular_user_access_token')
           localStorage.removeItem('regular_user')
@@ -50,50 +48,39 @@ export const RegularAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (fullName: string, email: string, password: string, confirmPassword: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fullName, email, password, confirmPassword }),
+      logger.info('Attempting user signup', { email }, 'RegularAuthContext')
+      
+      const data = await authService.signup({ 
+        fullName, 
+        email, 
+        password, 
+        confirmPassword 
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Signup failed')
-      }
 
       localStorage.setItem('regular_user_access_token', data.access_token)
       localStorage.setItem('regular_user', JSON.stringify(data.user))
       setUser(data.user)
       
+      logger.info('User signup successful', { userId: data.user.id }, 'RegularAuthContext')
       router.push('/dashboard')
     } catch (error) {
-      throw error
+      const appError = handleApiError(error, 'RegularAuthContext')
+      logger.error('User signup failed', appError, 'RegularAuthContext')
+      throw appError
     }
   }
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed')
-      }
+      logger.info('Attempting user login', { email }, 'RegularAuthContext')
+      
+      const data = await authService.login({ email, password })
 
       // Allow users, but redirect admins to admin panel
       if (data.user.role === 'admin' || data.user.role === 'superadmin') {
         localStorage.setItem('admin_user_access_token', data.access_token)
         localStorage.setItem('user', JSON.stringify(data.user))
+        logger.info('Admin user redirected to admin panel', { userId: data.user.id, role: data.user.role }, 'RegularAuthContext')
         router.push('/admin')
         return
       }
@@ -107,9 +94,12 @@ export const RegularAuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('regular_user', JSON.stringify(data.user))
       setUser(data.user)
       
+      logger.info('User login successful', { userId: data.user.id }, 'RegularAuthContext')
       router.push('/dashboard')
     } catch (error) {
-      throw error
+      const appError = handleApiError(error, 'RegularAuthContext')
+      logger.error('User login failed', appError, 'RegularAuthContext')
+      throw appError
     }
   }
 
@@ -119,14 +109,12 @@ export const RegularAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('regular_user_access_token')}`,
-        },
-      });
+      logger.info('User logout initiated', { userId: user?.id }, 'RegularAuthContext')
+      await authService.logout();
+      logger.info('User logout successful', undefined, 'RegularAuthContext')
     } catch (error) {
-      console.error('Logout error:', error);
+      const appError = handleApiError(error, 'RegularAuthContext')
+      logger.error('Logout error', appError, 'RegularAuthContext')
     } finally {
       localStorage.removeItem('regular_user_access_token');
       localStorage.removeItem('regular_user');

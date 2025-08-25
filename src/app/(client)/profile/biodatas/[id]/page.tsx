@@ -13,6 +13,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useProfileView } from "@/hooks/useProfileView";
 import { BiodataProfile, BiodataApprovalStatus, BiodataVisibilityStatus } from "@/types/biodata";
 import { BiodataStatusHandler } from "@/components/biodata/BiodataStatusHandler";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
 
 // Helper function to safely display data or fallback
 const safeDisplay = (value: unknown, fallback: string = "Not provided"): string => {
@@ -147,7 +149,8 @@ export default function Profile() {
         }
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Error fetching profile', appError, 'Page');
       setError(error instanceof Error ? error.message : "Failed to load profile");
     } finally {
       setLoading(false);
@@ -194,7 +197,8 @@ export default function Profile() {
         setUserHasBiodata(false);
       }
     } catch (error) {
-      console.error('Error checking user biodata:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Error checking user biodata', appError, 'Page');
       setUserHasBiodata(false);
     } finally {
       setCheckingUserBiodata(false);
@@ -209,7 +213,8 @@ export default function Profile() {
       const favoriteStatus = await isFavorite(profile.id);
       setIsFavoriteProfile(favoriteStatus);
     } catch (error) {
-      console.error('Error checking favorite status:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Error checking favorite status', appError, 'Page');
     }
   }, [profile, isAuthenticated, user, isFavorite]);
 
@@ -237,7 +242,8 @@ export default function Profile() {
         }
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Error toggling favorite', appError, 'Page');
     } finally {
       setFavoriteLoading(false);
     }
@@ -273,7 +279,8 @@ export default function Profile() {
         color: "success",
       });
     } catch (error) {
-      console.error('Failed to copy URL:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Failed to copy URL', appError, 'Page');
 
       // Fallback for browsers that don't support clipboard API
       try {
@@ -291,7 +298,8 @@ export default function Profile() {
           color: "success",
         });
       } catch (fallbackError) {
-        console.error('Fallback copy failed:', fallbackError);
+        const appError = handleApiError(fallbackError, 'Component');
+            logger.error('Fallback copy failed', appError, 'Page');
 
         // Show HeroUI error toast
         addToast({
@@ -322,7 +330,8 @@ export default function Profile() {
         try {
           await trackProfileView(parseInt(biodataId));
         } catch (error) {
-          console.error('Failed to track profile view:', error);
+          const appError = handleApiError(error, 'Component');
+            logger.error('Failed to track profile view', appError, 'Page');
         }
       };
 

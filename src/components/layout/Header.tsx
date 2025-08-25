@@ -3,6 +3,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Layout, Menu, X, User, ChevronDown, LogIn, UserPlus, Settings, LogOut, UserRoundPen, LayoutDashboard, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRegularAuth } from '@/context/RegularAuthContext';
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { userApi } from '@/lib/api-client';
+import { BiodataProfile } from '@/types/api';
 
 function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,43 +30,27 @@ function Header() {
       }
 
       try {
-        const token = localStorage.getItem('regular_user_access_token');
-        if (!token) {
-          setBiodataLoading(false);
-          return;
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/biodatas/current`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          }
-        });
-
-        if (response.ok) {
-          // Check if response has content before parsing JSON
-          const text = await response.text();
-          if (text) {
-            try {
-              const data = JSON.parse(text);
-              if (data && data.id) {
-                setBiodataId(data.id);
-              } else {
-                setBiodataId(null);
-              }
-            } catch (parseError) {
-              console.error('Error parsing biodata response:', parseError);
-              setBiodataId(null);
-            }
-          } else {
-            // Empty response means no biodata
-            setBiodataId(null);
-          }
+        logger.debug('Fetching user biodata ID', { userId: user?.id }, 'Header');
+        
+        const data = await userApi.get('/biodatas/current') as BiodataProfile | null;
+        
+        if (data && data.id) {
+          setBiodataId(data.id);
+          logger.debug('User biodata ID found', { biodataId: data.id }, 'Header');
         } else {
           setBiodataId(null);
+          logger.debug('No biodata found for user', undefined, 'Header');
         }
       } catch (error) {
-        console.error('Error fetching biodata ID:', error);
+        // Handle 404 or other errors gracefully - user might not have biodata yet
+        const appError = handleApiError(error, 'Header');
+        if (appError.statusCode === 404) {
+          setBiodataId(null);
+          logger.debug('User has no biodata yet', undefined, 'Header');
+        } else {
+          logger.error('Error fetching biodata ID', appError, 'Header');
+          setBiodataId(null);
+        }
       } finally {
         setBiodataLoading(false);
       }

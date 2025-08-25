@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import type { Metadata } from "next";
 import { Card, CardBody, CardHeader } from '@heroui/react';
 import { Users, FileText } from 'lucide-react';
-import { apiCall } from '@/lib/api';
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { userService, biodataService } from '@/lib/api-services';
 
 interface StatsData {
   totalUsers: number;
@@ -21,63 +23,28 @@ export default function AdminDashboard() {
       try {
         setLoading(true);
         setError(null);
-
-        // Get token from localStorage
-        const token = localStorage.getItem('admin_user_access_token');
-        console.log('Admin token found:', !!token);
         
-        if (!token) {
-          throw new Error('Admin authentication required');
-        }
+        logger.debug('Fetching admin dashboard stats', undefined, 'AdminDashboard');
 
-        console.log('Fetching admin stats...');
-
-        // Fetch both lists to get counts
-        const [usersResponse, biodatasResponse] = await Promise.all([
-          apiCall('api/users', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          }),
-          apiCall('api/biodatas/admin/all', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
+        // Fetch both lists to get counts using API services
+        const [users, biodatas] = await Promise.all([
+          userService.getAllUsers(),
+          biodataService.getAdminBiodatas()
         ]);
 
-        console.log('Users response status:', usersResponse.status);
-        console.log('Biodatas response status:', biodatasResponse.status);
-
-        if (!usersResponse.ok) {
-          const errorText = await usersResponse.text();
-          console.error('Users API error:', errorText);
-          throw new Error(`Failed to fetch users: ${usersResponse.status}`);
-        }
-
-        if (!biodatasResponse.ok) {
-          const errorText = await biodatasResponse.text();
-          console.error('Biodatas API error:', errorText);
-          throw new Error(`Failed to fetch biodatas: ${biodatasResponse.status}`);
-        }
-
-        const users = await usersResponse.json();
-        const biodatas = await biodatasResponse.json();
-
-        console.log('Users data:', users);
-        console.log('Biodatas data:', biodatas);
-        console.log('Users count:', Array.isArray(users) ? users.length : 'Not an array');
-        console.log('Biodatas count:', Array.isArray(biodatas) ? biodatas.length : 'Not an array');
+        logger.info('Admin stats fetched successfully', { 
+          usersCount: Array.isArray(users) ? users.length : 0,
+          biodatasCount: Array.isArray(biodatas) ? biodatas.length : 0
+        }, 'AdminDashboard');
 
         setStats({
           totalUsers: Array.isArray(users) ? users.length : 0,
           totalBiodatas: Array.isArray(biodatas) ? biodatas.length : 0
         });
       } catch (err) {
-        console.error('Error fetching admin stats:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch statistics');
+        const appError = handleApiError(err, 'AdminDashboard');
+        logger.error('Failed to fetch admin stats', appError, 'AdminDashboard');
+        setError(appError.message);
       } finally {
         setLoading(false);
       }

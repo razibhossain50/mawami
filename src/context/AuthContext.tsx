@@ -2,13 +2,10 @@
 
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-
-interface User {
-  id: number
-  fullName: string | null
-  email: string
-  role: string
-}
+import { logger } from '@/lib/logger'
+import { handleApiError } from '@/lib/error-handler'
+import { authService } from '@/lib/api-services'
+import { User, LoginResponse } from '@/types/api'
 
 interface AuthContextType {
   user: User | null
@@ -34,8 +31,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           // In a real app, you might want to validate the token with the backend
           setUser(JSON.parse(userData))
+          logger.debug('User data loaded from localStorage', { userId: JSON.parse(userData).id }, 'AuthContext')
         } catch (error) {
-          console.error('Failed to parse user data', error)
+          const appError = handleApiError(error, 'AuthContext')
+          logger.error('Failed to parse user data', appError, 'AuthContext')
           logout()
         }
       }
@@ -47,25 +46,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed')
-      }
+      logger.info('Admin login attempt', { email }, 'AuthContext')
+      
+      const data = await authService.adminLogin({ email, password })
 
       localStorage.setItem('admin_user_access_token', data.access_token)
       localStorage.setItem('user', JSON.stringify(data.user))
       setUser(data.user)
+      
+      logger.info('Admin login successful', { userId: data.user.id, role: data.user.role }, 'AuthContext')
     } catch (error) {
-      throw error
+      const appError = handleApiError(error, 'AuthContext')
+      logger.error('Admin login failed', appError, 'AuthContext')
+      throw appError
     }
   }
 
@@ -76,22 +69,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   //   router.push('/admin/login')
   // }
   const logout = async () => {
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('admin_user_access_token')}`,
-      },
-    });
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    localStorage.removeItem('admin_user_access_token');
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/admin/login');
+    try {
+      logger.info('Admin logout initiated', { userId: user?.id }, 'AuthContext')
+      await authService.logout()
+      logger.info('Admin logout successful', undefined, 'AuthContext')
+    } catch (error) {
+      const appError = handleApiError(error, 'AuthContext')
+      logger.error('Logout API call failed', appError, 'AuthContext')
+    } finally {
+      localStorage.removeItem('admin_user_access_token')
+      localStorage.removeItem('user')
+      setUser(null)
+      router.push('/admin/login')
+    }
   }
-};
 
   return (
     <AuthContext.Provider

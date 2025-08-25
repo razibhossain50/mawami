@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
 
 export const useProfileView = () => {
   const trackProfileView = useCallback(async (biodataId: number) => {
@@ -14,14 +16,16 @@ export const useProfileView = () => {
       });
 
       if (!response.ok) {
-        console.error('Failed to track profile view:', response.statusText);
+        const appError = handleApiError(response.statusText, 'Component');
+            logger.error('Failed to track profile view', appError, 'UseProfileView');
         return { success: false, error: response.statusText };
       }
 
       const result = await response.json();
       return { success: true, data: result };
     } catch (error) {
-      console.error('Error tracking profile view:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Error tracking profile view', appError, 'UseProfileView');
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }, []);
@@ -41,14 +45,16 @@ export const useProfileView = () => {
       });
 
       if (!response.ok) {
-        console.error('Failed to get profile view stats:', response.statusText);
+        const appError = handleApiError(response.statusText, 'Component');
+            logger.error('Failed to get profile view stats', appError, 'UseProfileView');
         return { success: false, error: response.statusText };
       }
 
       const stats = await response.json();
       return { success: true, data: stats };
     } catch (error) {
-      console.error('Error getting profile view stats:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Error getting profile view stats', appError, 'UseProfileView');
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }, []);

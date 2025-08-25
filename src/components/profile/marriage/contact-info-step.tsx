@@ -2,6 +2,10 @@
 import { Input, Card, CardBody, Tooltip } from "@heroui/react";
 import { Info, Upload } from "lucide-react";
 import { useState } from "react";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { apiClient } from '@/lib/api-client';
+import { FileUploadResponse } from '@/types/api';
 
 interface ContactInfoStepProps {
   data: Record<string, unknown>;
@@ -31,32 +35,17 @@ export function ContactInfoStep({ data, errors, updateData }: ContactInfoStepPro
       try {
         setIsUploading(true);
         
-        // Upload file to backend
-        const formData = new FormData();
-        formData.append('profilePicture', file);
-
-        const token = localStorage.getItem('regular_user_access_token');
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/upload/profile-picture`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
-
-        const result = await response.json();
+        // Upload file to backend using API client
+        const result = await apiClient.uploadFile('/api/upload/profile-picture', file, 'profilePicture') as FileUploadResponse;
         
         setUploadedFile(file);
         // Store the URL returned from backend
         updateData({ profilePicture: result.url });
         
-        console.log('File uploaded successfully:', result);
+        logger.debug('File uploaded successfully', result, 'Contact-info-step');
       } catch (error) {
-        console.error('Upload error:', error);
+        const appError = handleApiError(error, 'Component');
+            logger.error('Upload error', appError, 'Contact-info-step');
         alert('Failed to upload file. Please try again.');
       } finally {
         setIsUploading(false);

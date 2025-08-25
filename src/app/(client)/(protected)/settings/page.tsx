@@ -4,6 +4,9 @@ import { Lock, User, Mail, AtSign } from "lucide-react";
 import { Card, CardBody, CardHeader, Input, Button } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { useRegularAuth } from "@/context/RegularAuthContext";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
+import { userApi } from '@/lib/api-client';
 
 export default function Settings() {
   const [name, setName] = useState("");
@@ -45,22 +48,9 @@ export default function Settings() {
         updateData.email = email;
       }
 
-      console.log('Updating user profile:', updateData);
+      logger.info('Updating user profile', updateData, 'Settings');
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update profile');
-      }
+      const data = await userApi.put(`/users/${user.id}`, updateData);
 
       // Update local storage with new user data
       const updatedUser = { 
@@ -76,7 +66,8 @@ export default function Settings() {
       setTimeout(() => setMessage(""), 3000);
 
     } catch (error) {
-      console.error('Profile update error:', error);
+      const appError = handleApiError(error, 'Component');
+            logger.error('Profile update error', appError, 'Page');
       setMessage(error instanceof Error ? error.message : "Failed to update profile");
     } finally {
       setIsLoading(false);

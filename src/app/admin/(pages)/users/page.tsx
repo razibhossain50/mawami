@@ -7,6 +7,9 @@ import {
     Dropdown, DropdownMenu, DropdownItem, Chip, User, Pagination, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Select, SelectItem
 } from "@heroui/react";
 import { Plus, EllipsisVertical, Search, ChevronDown, Trash2 } from "lucide-react";
+import { logger } from '@/lib/logger';
+import { adminApi } from '@/lib/api-client';
+import { handleApiError } from '@/lib/error-handler';
 
 
 type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -113,14 +116,16 @@ export default function Users() {
                 const user = JSON.parse(userData);
                 setCurrentUser(user);
             } catch (error) {
-                console.error('Failed to parse user data:', error);
+                const appError = handleApiError(error, 'AdminUsersPage');
+                logger.error('Failed to parse user data', appError, 'AdminUsersPage');
             }
         } else if (regularUserData) {
             try {
                 const user = JSON.parse(regularUserData);
                 setCurrentUser(user);
             } catch (error) {
-                console.error('Failed to parse regular user data:', error);
+                const appError = handleApiError(error, 'AdminUsersPage');
+                logger.error('Failed to parse regular user data', appError, 'AdminUsersPage');
             }
         }
     }, []);
@@ -139,28 +144,15 @@ export default function Users() {
                     return;
                 }
 
-                console.log('Fetching users with token:', token ? 'Token found' : 'No token');
+                logger.info('Fetching users', { hasToken: !!token }, 'AdminUsersPage');
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    }
-                });
-
-                console.log('Users API response status:', response.status);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setUsers(data);
-                } else {
-                    const errorText = await response.text();
-                    console.error('Users API error:', errorText);
-                    setError(`Failed to fetch users - ${response.status}: ${response.statusText}`);
-                }
+                const data = await adminApi.get('/users') as DatabaseUser[];
+                setUsers(data);
+                logger.info('Successfully fetched users', { count: data.length }, 'AdminUsersPage');
             } catch (err) {
-                setError('Error fetching users');
-                console.error('Error fetching users:', err);
+                const appError = handleApiError(err, 'AdminUsersPage');
+                logger.error('Error fetching users', appError, 'AdminUsersPage');
+                setError(appError.message);
             } finally {
                 setLoading(false);
             }
@@ -178,13 +170,14 @@ export default function Users() {
             // Get admin authentication token
             const token = localStorage.getItem('admin_user_access_token');
 
-            console.log('=== DELETE USER DEBUG ===');
-            console.log('Current user role:', currentUser?.role);
-            console.log('Token exists:', !!token);
-            console.log('User to delete:', userToDelete.id, userToDelete.fullName);
+            logger.info('Delete user initiated', {
+                currentUserRole: currentUser?.role,
+                hasToken: !!token,
+                userToDelete: { id: userToDelete.id, fullName: userToDelete.fullName }
+            }, 'AdminUsersPage');
 
             if (!token) {
-                console.error('No authentication token found');
+                logger.error('No authentication token found for delete operation', undefined, 'AdminUsersPage');
                 alert('No authentication token found. Please login again.');
                 return;
             }
@@ -194,41 +187,17 @@ export default function Users() {
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${userToDelete.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            console.log('Delete response status:', response.status);
-
-            if (response.ok) {
-                // Remove user from local state
-                setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
-                setDeleteModalOpen(false);
-                setUserToDelete(null);
-                alert('User deleted successfully!');
-            } else {
-                const errorText = await response.text();
-                console.error('Failed to delete user:', response.status, errorText);
-                
-                let errorMessage = 'Failed to delete user. ';
-                if (response.status === 401) {
-                    errorMessage += 'Authentication failed. Please login again.';
-                } else if (response.status === 403) {
-                    errorMessage += 'Access denied. Only superadmin can delete users.';
-                } else if (response.status === 400) {
-                    errorMessage += 'Cannot delete superadmin accounts.';
-                } else {
-                    errorMessage += `Server error: ${response.status}`;
-                }
-                
-                alert(errorMessage);
-            }
+            await adminApi.delete(`/users/${userToDelete.id}`);
+            
+            // Remove user from local state
+            setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
+            setDeleteModalOpen(false);
+            setUserToDelete(null);
+            logger.info('User deleted successfully', { userId: userToDelete.id }, 'AdminUsersPage');
+            alert('User deleted successfully!');
         } catch (error) {
-            console.error('Error deleting user:', error);
+            const appError = handleApiError(error, 'AdminUsersPage');
+            logger.error('Error deleting user', appError, 'AdminUsersPage');
             alert('Network error. Please check if the backend server is running.');
         } finally {
             setIsDeleting(false);
@@ -275,46 +244,34 @@ export default function Users() {
             const token = localStorage.getItem('admin_user_access_token');
 
             if (!token) {
-                console.error('No authentication token found');
+                logger.error('No authentication token found for create user operation', undefined, 'AdminUsersPage');
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    fullName: newUserForm.fullName,
-                    email: newUserForm.email,
-                    password: newUserForm.password,
-                    confirmPassword: newUserForm.confirmPassword,
-                    role: 'admin' // Set role to admin as specified
-                }),
-            });
+            const newUser = await adminApi.post('/users', {
+                fullName: newUserForm.fullName,
+                email: newUserForm.email,
+                password: newUserForm.password,
+                confirmPassword: newUserForm.confirmPassword,
+                role: 'admin' // Set role to admin as specified
+            }) as DatabaseUser;
 
-            if (response.ok) {
-                const newUser = await response.json();
-                // Add new user to local state
-                setUsers(prev => [...prev, newUser]);
-                // Reset form and close modal
-                setNewUserForm({
-                    fullName: '',
-                    email: '',
-                    password: '',
-                    confirmPassword: ''
-                });
-                setFormErrors({});
-                setAddUserModalOpen(false);
-            } else {
-                const errorData = await response.json();
-                console.error('Failed to create user:', response.status, errorData);
-                alert(errorData.message || 'Failed to create user. Please try again.');
-            }
+            // Add new user to local state
+            setUsers(prev => [...prev, newUser]);
+            // Reset form and close modal
+            setNewUserForm({
+                fullName: '',
+                email: '',
+                password: '',
+                confirmPassword: ''
+            });
+            setFormErrors({});
+            setAddUserModalOpen(false);
+            logger.info('User created successfully', { userId: newUser.id }, 'AdminUsersPage');
         } catch (error) {
-            console.error('Error creating user:', error);
-            alert('Error creating user. Please try again.');
+            const appError = handleApiError(error, 'AdminUsersPage');
+            logger.error('Error creating user', appError, 'AdminUsersPage');
+            alert(appError.message || 'Error creating user. Please try again.');
         } finally {
             setIsCreatingUser(false);
         }
@@ -382,48 +339,35 @@ export default function Users() {
             const token = localStorage.getItem('admin_user_access_token');
 
             if (!token) {
-                console.error('No authentication token found');
+                logger.error('No authentication token found for update user operation', undefined, 'AdminUsersPage');
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${userToEdit.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    fullName: editUserForm.fullName,
-                    email: editUserForm.email,
-                    role: editUserForm.role
-                }),
+            const updatedUser = await adminApi.put(`/users/${userToEdit.id}`, {
+                fullName: editUserForm.fullName,
+                email: editUserForm.email,
+                role: editUserForm.role
+            }) as Partial<DatabaseUser>;
+            // Update user in local state
+            setUsers(prev => prev.map(user =>
+                user.id === userToEdit.id
+                    ? { ...user, ...updatedUser }
+                    : user
+            ));
+            // Reset form and close modal
+            setEditUserForm({
+                fullName: '',
+                email: '',
+                role: ''
             });
-
-            if (response.ok) {
-                const updatedUser = await response.json();
-                // Update user in local state
-                setUsers(prev => prev.map(user =>
-                    user.id === userToEdit.id
-                        ? { ...user, ...updatedUser }
-                        : user
-                ));
-                // Reset form and close modal
-                setEditUserForm({
-                    fullName: '',
-                    email: '',
-                    role: ''
-                });
-                setEditFormErrors({});
-                setEditUserModalOpen(false);
-                setUserToEdit(null);
-            } else {
-                const errorData = await response.json();
-                console.error('Failed to update user:', response.status, errorData);
-                alert(errorData.message || 'Failed to update user. Please try again.');
-            }
+            setEditFormErrors({});
+            setEditUserModalOpen(false);
+            setUserToEdit(null);
+            logger.info('User updated successfully', { userId: userToEdit.id }, 'AdminUsersPage');
         } catch (error) {
-            console.error('Error updating user:', error);
-            alert('Error updating user. Please try again.');
+            const appError = handleApiError(error, 'AdminUsersPage');
+            logger.error('Error updating user', appError, 'AdminUsersPage');
+            alert(appError.message || 'Error updating user. Please try again.');
         } finally {
             setIsUpdatingUser(false);
         }

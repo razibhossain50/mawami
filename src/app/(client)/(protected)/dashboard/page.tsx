@@ -7,6 +7,8 @@ import { useProfileView } from "@/hooks/useProfileView";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBiodataStatus } from "@/hooks/useBiodataStatus";
 import { BiodataStatusToggle } from "@/components/dashboard/BiodataStatusToggle";
+import { logger } from '@/lib/logger';
+import { handleApiError } from '@/lib/error-handler';
 
 export default function Dashboard() {
   const { user } = useRegularAuth();
@@ -40,7 +42,8 @@ export default function Dashboard() {
           setViewStats(result.data);
         }
       } catch (error) {
-        console.error('Failed to fetch view stats:', error);
+        const appError = handleApiError(error, 'Dashboard');
+        logger.error('Failed to fetch view stats', appError, 'Dashboard');
       } finally {
         setStatsLoading(false);
       }
@@ -62,7 +65,8 @@ export default function Dashboard() {
           newThisWeek: 0 // We'll calculate this separately
         });
       } catch (error) {
-        console.error('Failed to fetch favorites stats:', error);
+        const appError = handleApiError(error, 'Dashboard');
+        logger.error('Failed to fetch favorites stats', appError, 'Dashboard');
       } finally {
         setFavoritesLoading(false);
       }
@@ -136,7 +140,7 @@ export default function Dashboard() {
                   <Button
                     size="lg"
                     className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl font-bold px-10 py-4 text-lg rounded-2xl transition-all duration-300 hover:scale-105"
-                    onClick={() => console.log("Buy more connections")}
+                    onClick={() => logger.info('Buy more connections clicked', { userId: user?.id }, 'Dashboard')}
                   >
                     <Plus className="mr-3 h-6 w-6" />
                     Buy More Connections
