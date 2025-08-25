@@ -1,5 +1,6 @@
 # Ignore node_modules globally
 node_modules/
+tsconfig.tsbuildinfo
 
 # Optional: Ignore local logs and environment files
 pnpm-lock.yaml
