@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "scripts:migrate-logs": "node scripts/migrate-logs.js",
+    "test:api": "node scripts/api-smoke-test.js"
   },
   "dependencies": {
     "@google-cloud/local-auth": "^3.0.1",
@@ -39,7 +41,8 @@
     "postcss": "^8.5.4",
     "tailwindcss": "^4.1.8",
     "tw-animate-css": "^1.3.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "node-fetch": "^3.3.2"
   },
   "overrides": {
     "@react-jvectormap/core": {

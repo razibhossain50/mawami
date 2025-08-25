@@ -85,6 +85,26 @@ const response = await fetch(`${API_URL}/users`, {
 const users = await userApi.get('/users');
 ```
 
+### 5. **API Services Layer** (`src/lib/api-services.ts`)
+Centralized, typed service layer that maps to backend endpoints (all with `/api/` prefix). Components/hooks now import from services instead of calling the client directly.
+
+```typescript
+import { authService, userService, biodataService, favoritesService } from '@/lib/api-services';
+
+await authService.login({ email, password });
+const users = await userService.getAllUsers();
+const biodatas = await biodataService.getAllBiodatas();
+```
+
+### 6. **Next.js Rewrites** (`next.config.ts`)
+Added a development rewrite to forward `/api/:path*` to the backend when needed. This prevents Next from attempting to compile removed mock routes.
+
+```ts
+async rewrites() {
+  return [{ source: '/api/:path*', destination: 'http://localhost:2000/api/:path*' }];
+}
+```
+
 ### 4. **Input Validation** (`src/lib/validation.ts`)
 ```typescript
 // Before
@@ -115,6 +135,7 @@ if (!validation.success) {
 - `src/components/dashboard/BiodataStatusToggle.tsx` - Status management
 - `src/components/layout/Header.tsx` - Navigation
 - `src/hooks/useFavorites.ts` - Favorites management
+- All above now consume `api-services.ts`
 - `src/app/(client)/(protected)/settings/page.tsx` - User settings
 - `src/app/(client)/(protected)/favorites/page.tsx` - Favorites page
 
@@ -172,16 +193,28 @@ if (!validation.success) {
 
 ## 🔄 **Migration Script Created**
 
-A migration script was created and executed to automatically update remaining files:
+A unified migration script was created and executed to automatically update remaining files:
 
 ```bash
-node scripts/migrate-console-logs.js
+node scripts/migrate-logs.js
 ```
 
 **Results:**
-- ✅ 10+ additional files updated
-- ✅ All remaining console statements replaced
-- ✅ Proper imports added automatically
+- ✅ All console.* migrated to `logger.*`
+- ✅ Logger signatures normalized and component names inferred from filenames
+- ✅ Missing imports for `logger`/`handleApiError` added
+
+---
+
+## 🌐 API Integration and Status
+
+- All frontend calls now use `/api/` prefix.
+- Removed all temporary Next.js API routes under `src/app/api/*`.
+- Added `tests/api-smoke-test.js` to validate key endpoints end-to-end.
+- Known backend items:
+  - Admin login currently returns 401 (no admin seeded or wrong creds)
+  - `/api/biodatas/admin/all` previously 500 (investigate on backend)
+  - `/api/stats/admin` 404 (missing route on backend)
 
 ---
 
