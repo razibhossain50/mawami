@@ -586,8 +586,8 @@ The Finder platform includes a complete Google OAuth 2.0 implementation that all
 - **Seamless integration** with existing authentication system
 
 #### API Endpoints (`backend/src/auth/auth.controller.ts`)
-- `GET /auth/google` - Initiates Google OAuth flow
-- `GET /auth/google/callback` - Handles Google OAuth callback with redirect to frontend
+- `GET /api/auth/google` - Initiates Google OAuth flow
+- `GET /api/auth/google/callback` - Handles Google OAuth callback with redirect to frontend
 
 #### Database Schema Updates (`backend/src/user/user.entity.ts`)
 - Added `googleId` field for Google user identification
@@ -648,7 +648,7 @@ The Finder platform includes a complete Google OAuth 2.0 implementation that all
      ```
    - Authorized redirect URIs:
      ```
-     http://localhost:2000/auth/google/callback
+     http://localhost:2000//api/auth/google/callback
      ```
 
 ### Environment Configuration
@@ -658,7 +658,7 @@ The Finder platform includes a complete Google OAuth 2.0 implementation that all
 # Google OAuth Configuration
 GOOGLE_CLIENT_ID=your_actual_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_actual_google_client_secret_here
-GOOGLE_CALLBACK_URL=http://localhost:2000/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:2000/api/auth/google/callback
 ```
 
 **Note**: Replace with actual credentials from Google Cloud Console

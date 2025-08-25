@@ -18,7 +18,7 @@ export default function GoogleOAuthButton({ mode, className = "" }: GoogleOAuthB
     if (backendUrl.endsWith('/')) {
       backendUrl = backendUrl.slice(0, -1);
     }
-    window.location.href = `${backendUrl}/auth/google`;
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   return (
