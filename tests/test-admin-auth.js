@@ -1,5 +1,5 @@
 // Test script to verify admin authentication and permissions
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:2000';
 
 async function testAdminPermissions() {
   console.log('🧪 Testing Admin Authentication & Permissions...\n');

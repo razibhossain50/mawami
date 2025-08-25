@@ -29,7 +29,7 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`http://localhost:2000${url}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${url}`, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,

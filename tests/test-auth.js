@@ -1,8 +1,10 @@
 const fetch = require('node-fetch');
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:2000';
+
 async function testSignup() {
   try {
-    const response = await fetch('http://localhost:2000/auth/signup', {
+    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,7 +26,7 @@ async function testSignup() {
 
 async function testLogin() {
   try {
-    const response = await fetch('http://localhost:2000/auth/login', {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

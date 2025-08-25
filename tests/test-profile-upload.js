@@ -1,5 +1,5 @@
 // Test script to verify profile picture upload functionality
-const API_BASE_URL = 'http://localhost:2000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:2000';
 
 async function testProfileUpload() {
   console.log('🧪 Testing Profile Picture Upload...\n');

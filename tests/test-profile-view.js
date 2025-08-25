@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 async function testProfileViewTracking() {
-  const baseUrl = 'http://localhost:3001';
+  const baseUrl = 'http://localhost:3000';
   
   try {
     console.log('Testing profile view tracking...');
