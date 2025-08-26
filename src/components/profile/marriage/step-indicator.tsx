@@ -41,7 +41,7 @@ export function StepIndicator({ steps, currentStep, completedSteps = [], classNa
               {/* Step Circle */}
               <div
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all duration-200",
+                  "flex w-7 md:w-10 h-7 md:h-10 items-center justify-center rounded-full text-sm font-medium transition-all duration-200",
                   isActive && "bg-blue-600 text-white",
                   isCompleted && "bg-green-600 text-white",
                   !isActive && !isCompleted && "bg-white text-gray-400 border-2 border-gray-300"
@@ -58,7 +58,7 @@ export function StepIndicator({ steps, currentStep, completedSteps = [], classNa
               {index < steps.length - 1 && (
                 <div
                   className={cn(
-                    "h-0.5 w-16 lg:w-20 mx-2 transition-colors duration-200",
+                    "h-0.5 w-4 md:w-16 lg:w-20 mx-2 transition-colors duration-200",
                     isCompleted ? "bg-green-600" : "bg-gray-300"
                   )}
                 />

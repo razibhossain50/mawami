@@ -344,7 +344,7 @@ export default function BiodataForm() {
 
                 {/* Form Content */}
                 <Card className="shadow-sm">
-                    <CardBody className="p-6 md:p-8">
+                    <CardBody className="p-4 md:p-8">
                         {isLoading ? (
                             <div className="flex items-center justify-center py-12">
                                 <div className="text-center">

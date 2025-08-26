@@ -54,7 +54,7 @@ export function ContactInfoStep({ data, errors, updateData }: ContactInfoStepPro
   };
 
   return (
-    <div className="p-6 space-y-8 bg-white rounded-xl shadow-lg border border-slate-100">
+    <div className="space-y-8">
       <div className="border-b pb-4 border-gray-200">
         <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
           <span className="w-1.5 h-8 bg-gradient-to-tr from-amber-600 to-amber-400 rounded-lg" />
