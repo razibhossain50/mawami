@@ -85,7 +85,7 @@ const AppHeader: React.FC = () => {
 
           <Link href="/" className="lg:hidden group">
             <span className="font-bold text-xl bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent group-hover:from-rose-600 group-hover:to-purple-600 transition-all duration-200">
-              Finder
+              Mawami
             </span>
             {/* <Image
               width={154}

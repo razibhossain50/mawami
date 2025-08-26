@@ -352,13 +352,13 @@ export const BiodataSearch = () => {
 
     return (
         <div className="space-y-8 pt-20 bg-[url('/images/hero-bg.png')] bg-no-repeat bg-center bg-cover">
-            <div className="container max-w-7xl mx-auto py-24 space-y-8">
+            <div className="container max-w-7xl mx-auto py-24 px-4 space-y-8">
                 {/* Enhanced Header */}
                 <div className="text-center space-y-5 pb-12">
                     <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
                         <div className="flex items-center justify-center gap-2">
                             <Sparkles className="h-6 w-6 text-rose-500" aria-hidden="true" />
-                            <div className=" text-gray-800">Finder</div>
+                            <div className=" text-gray-800">Mawami</div>
                             <Sparkles className="h-6 w-6 text-rose-500" aria-hidden="true" />
                         </div>
                     </h1>

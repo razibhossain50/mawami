@@ -1,4 +1,5 @@
 import { Outfit } from 'next/font/google';
+import type { Metadata } from 'next';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import {AppLayoutContent} from '@/components/layout/AppLayoutContent';
@@ -13,6 +14,21 @@ const outfit = Outfit({
   subsets: ["latin"],
    display: "swap",
 });
+
+export const metadata: Metadata = {
+  title: "Mawami",
+  description: "Your Story Begins Here",
+  openGraph: {
+    title: "Mawami",
+    description: "Your Story Begins Here",
+    siteName: "Mawami",
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mawami',
+    description: 'Your Story Begins Here',
+  },
+};
 
 export default function AdminLayout({
   children,

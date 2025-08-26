@@ -8,7 +8,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_API_BASE_URL: z.string().url('Invalid API base URL'),
   
   // Optional environment variables with defaults
-  NEXT_PUBLIC_APP_NAME: z.string().default('Finder'),
+  NEXT_PUBLIC_APP_NAME: z.string().default('Mawami'),
   NEXT_PUBLIC_APP_VERSION: z.string().default('2.0.2'),
   NEXT_PUBLIC_ENVIRONMENT: z.enum(['development', 'staging', 'production']).default('development'),
   

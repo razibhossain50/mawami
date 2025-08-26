@@ -162,7 +162,7 @@ export default function LoginFormRegular() {
                 <Divider className="my-4" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="bg-white px-3 text-sm text-gray-500">
-                    New to Finder?
+                    New to Mawami?
                   </span>
                 </div>
               </div>
@@ -183,7 +183,7 @@ export default function LoginFormRegular() {
 
         <div className="text-center mt-6">
           <p className="text-sm text-gray-600">
-            Join thousands of people finding love on Finder
+            Join thousands of people finding love on Mawami
           </p>
         </div>
       </div>

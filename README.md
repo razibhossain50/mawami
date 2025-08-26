@@ -1,4 +1,4 @@
-# Finder - Matrimony Platform
+# Mawami - Matrimony Platform
 
 A comprehensive matrimony/biodata platform built with Next.js and NestJS, designed to help people find their perfect life partners.
 
@@ -34,8 +34,8 @@ A comprehensive matrimony/biodata platform built with Next.js and NestJS, design
 
 ### 1. Clone the Repository
 ```bash
-git clone git@github.com:razibhossain50/Finder.git
-cd Finder
+git clone git@github.com:razibhossain50/mawami.git
+cd mawami
 ```
 
 > **Windows Users**: Place the repository near the root of your drive if you face issues while cloning.
@@ -73,12 +73,12 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=your_db_user
 DB_PASS=your_db_password
-DB_NAME=finder_db
+DB_NAME=mawami_db
 JWT_SECRET=your_jwt_secret
 ```
 
 ### 4. Database Setup
-1. Create a PostgreSQL database named `finder_db`
+1. Create a PostgreSQL database named `mawami_db`
 2. The application will automatically create tables on first run using TypeORM synchronization
 
 ### 5. Start Development Servers
@@ -103,18 +103,18 @@ yarn dev
 The system automatically creates these test accounts on startup:
 
 ### Regular User
-- **Email**: `user@finder.com`
-- **Password**: `12345`
+- **Email**: `user@example.com`
+- **Password**: `Testpass@50`
 - **Access**: User dashboard and biodata creation
 
 ### Admin User
 - **Email**: `admin@example.com`
-- **Password**: `admin`
+- **Password**: `Testpass@50`
 - **Access**: Admin dashboard with biodata and user management
 
 ### Superadmin User
 - **Email**: `razibmahmud50@gmail.com`
-- **Password**: `superadmin`
+- **Password**: `Testpass@50`
 - **Access**: Full admin access including user deletion
 
 ## 🔧 Development Commands
@@ -153,9 +153,8 @@ node tests/test-biodata-api.js     # Test biodata API endpoints
 ## 📁 Project Structure
 
 ```
-Finder/
+Mawami/
 ├── src/                     # Frontend source code
-├── backend/                 # Backend source code
 ├── public/                  # Static assets
 │   └── uploads/            # User uploaded files
 ├── README.md               # This file

@@ -1,8 +1,8 @@
-# Finder - Matrimony Platform Context
+# Mawami - Matrimony Platform Context
 
 ## Project Overview
 
-**Finder** is a comprehensive matrimony/biodata platform built with Next.js and NestJS, designed to help people find their perfect life partners. The platform features a complete biodata management system with advanced search capabilities, admin panel for user management, role-based authentication system, and profile picture upload functionality.
+**Mawami** is a comprehensive matrimony/biodata platform built with Next.js and NestJS, designed to help people find their perfect life partners. The platform features a complete biodata management system with advanced search capabilities, admin panel for user management, role-based authentication system, and profile picture upload functionality.
 
 ## Technology Stack
 
@@ -37,7 +37,7 @@
 ## Project Structure
 
 ```
-finder_frontend/
+mawami/
 ├── src/
 │   ├── app/                           # Next.js App Router
 │   │   ├── (client)/                  # Client-facing application
@@ -372,7 +372,7 @@ interface BiodataFilters {
 ### Installation
 ```bash
 # Clone repository
-git clone git@github.com:razibhossain50/Finder.git
+git clone git@github.com:razibhossain50/mawami.git
 
 # Install frontend dependencies
 npm install
@@ -571,7 +571,7 @@ export default function ProtectedRoute({ children }) {
 ## Google OAuth 2.0 Single Sign-On Implementation
 
 ### Overview
-The Finder platform includes a complete Google OAuth 2.0 implementation that allows users to sign up and log in using their Google accounts. This provides a seamless authentication experience and reduces friction in the user registration process.
+The Mawami platform includes a complete Google OAuth 2.0 implementation that allows users to sign up and log in using their Google accounts. This provides a seamless authentication experience and reduces friction in the user registration process.
 
 ### Backend Implementation
 
@@ -618,13 +618,13 @@ The Finder platform includes a complete Google OAuth 2.0 implementation that all
 
 #### Prerequisites
 - Google account with access to Google Cloud Console
-- Finder project running locally (frontend on :3000, backend on :2000)
+- Mawami project running locally (frontend on :3000, backend on :2000)
 
 #### Step-by-Step Configuration
 
 1. **Create Google Cloud Project**
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create new project: "Finder Matrimony"
+   - Create new project: "Mawami Matrimony"
 
 2. **Enable Required APIs**
    - Enable "Google+ API" in APIs & Services → Library
@@ -633,14 +633,14 @@ The Finder platform includes a complete Google OAuth 2.0 implementation that all
 3. **Configure OAuth Consent Screen**
    - Go to APIs & Services → OAuth consent screen
    - Choose "External" for testing
-   - App name: "Finder - Matrimony Platform"
+   - App name: "Mawami - Matrimony Platform"
    - Add scopes: `../auth/userinfo.email`, `../auth/userinfo.profile`
    - Add test users for development
 
 4. **Create OAuth Credentials**
    - Go to APIs & Services → Credentials
    - Create OAuth client ID → Web application
-   - Name: "Finder Web Client"
+   - Name: "Mawami Web Client"
    - Authorized JavaScript origins:
      ```
      http://localhost:3000
@@ -837,7 +837,7 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
-This context provides a comprehensive overview of the Finder matrimony platform, its architecture, components, and development guidelines for efficient collaboration and maintenance.
+This context provides a comprehensive overview of the Mawami matrimony platform, its architecture, components, and development guidelines for efficient collaboration and maintenance.
 
 ---
 

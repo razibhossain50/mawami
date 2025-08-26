@@ -253,7 +253,7 @@ const AllBiodatas = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {achievements.map((achievement, index) => (
                                 <div key={index} className="flex items-center gap-4 p-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl hover:shadow-md transition-shadow border border-rose-100">
-                                    <div className="bg-gradient-to-r from-rose-500 to-pink-500 rounded-full w-12 h-12 flex items-center justify-center shadow-md">
+                                    <div className="flex-none bg-gradient-to-r from-rose-500 to-pink-500 rounded-full w-12 h-12 flex items-center justify-center shadow-md">
                                         <achievement.icon className="h-6 w-6 text-white" />
                                     </div>
                                     <span className="text-gray-700 font-medium">{achievement.text}</span>

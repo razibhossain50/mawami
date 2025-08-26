@@ -250,7 +250,7 @@ const AppSidebar: React.FC = () => {
         <Link className="text-3xl" href="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
-              Finder
+              Mawami
               {/* <Image
                 className="dark:hidden"
                 src="/images/logo/logo-transparent.png"

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Layout, Menu, X, User, ChevronDown, LogIn, UserPlus, Settings, LogOut, UserRoundPen, LayoutDashboard, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRegularAuth } from '@/context/RegularAuthContext';
@@ -77,11 +78,11 @@ function Header() {
     <header>
       <nav className="  bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20">
+          <div className="flex items-center justify-between h-20">
             {/* Left section */}
-            <div className="flex items-center">
+            <div className="flex items-center md:hidden">
               {/* Mobile menu button */}
-              <div className="md:hidden" ref={mobileMenuRef}>
+              <div className="" ref={mobileMenuRef}>
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:text-brand-600 hover:bg-gradient-to-r hover:from-brand-50 hover:to-rose-50 focus:outline-none transition-all duration-200 dark:text-gray-300 dark:hover:text-brand-400"
@@ -115,23 +116,10 @@ function Header() {
                   ))}
                 </div>
               </div>
-
-              {/* Logo */}
-              <Link href="/" className="group">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Layout className="h-7 w-7 text-brand-500 group-hover:text-brand-600 transition-colors duration-200" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-rose-500 to-purple-500 opacity-0 group-hover:opacity-20 rounded-lg blur-sm transition-opacity duration-200"></div>
-                  </div>
-                  <span className="font-bold text-xl bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent from-rose-600 to-purple-600 transition-all duration-200">
-                    Finder
-                  </span>
-                </div>
-              </Link>
             </div>
 
             {/* Middle section - Navigation Items (hidden on mobile) */}
-            <div className="hidden md:flex items-center justify-center space-x-1">
+            <div className="md:order-2 hidden md:flex items-center justify-center space-x-1">
               {navItems.map((item) => (
                 <a
                   key={item.label}
@@ -149,8 +137,22 @@ function Header() {
               ))}
             </div>
 
+             {/* Logo */}
+            <div className="order-2 md:order-1 flex-1 md:flex-0 text-center">
+              <Link href="/" className="inline-block px-4 w-[180px]">
+                  <Image
+                    src="/images/logo/logo.png"
+                    alt="Mawami logo"
+                    width={240}
+                    height={80}
+                    priority
+                  />
+                  <span className="sr-only">Mawami</span>
+              </Link>
+            </div>
+
             {/* Right section */}
-            <div className="flex items-center space-x-4">
+            <div className="order-3 flex items-center space-x-4">
               {/* Auth Buttons (hidden on mobile) */}
               {!isAuthenticated && (
                 <div className="hidden md:flex items-center space-x-3">

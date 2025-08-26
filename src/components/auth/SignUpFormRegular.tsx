@@ -99,7 +99,7 @@ export default function SignupFormRegular() {
           <CardHeader className="flex flex-col items-center justify-center text-center pb-4 pt-8">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-gray-800">
-                Join Finder
+                Join Mawami
               </h1>
               <p className="text-gray-600 text-base">
                 Create your account to start your journey
