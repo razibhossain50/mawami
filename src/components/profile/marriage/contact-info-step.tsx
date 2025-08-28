@@ -67,9 +67,9 @@ export function ContactInfoStep({ data, errors, updateData }: ContactInfoStepPro
 
 
         {/* Contact details grid */}
-        <div className="grid gap-x-8 gap-y-6">
+        <div className="grid gap-4">
           {/* Name with Admin Note */}
-          <div className="col-span-2 mb-6">
+          <div className="col-span-2">
             <Input
               label="Your full name"
               placeholder="Enter full name"
@@ -93,7 +93,7 @@ export function ContactInfoStep({ data, errors, updateData }: ContactInfoStepPro
           </div>
 
           {/* Profile Picture */}
-          <div className="col-span-2 space-y-2 mb-6">
+          <div className="col-span-2 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-sm font-medium">Profile Picture</span>
               <Tooltip content="Only visible for admin and who bought the connection. Only JPEG/PNG Image">
@@ -169,31 +169,36 @@ export function ContactInfoStep({ data, errors, updateData }: ContactInfoStepPro
           </div>
 
           {/* Email */}
-          <Input
-            type="email"
-            label="Email"
-            placeholder="Enter email address"
-            value={(data.email as string) || ""}
-            onChange={(e) => updateData({ email: e.target.value })}
-            isRequired
-            errorMessage={errors.email}
-            isInvalid={!!errors.email}
-          />
+          <div className="col-span-2">
+              <Input
+                className="col-span-2"
+                type="email"
+                label="Email"
+                placeholder="Enter email address"
+                value={(data.email as string) || ""}
+                onChange={(e) => updateData({ email: e.target.value })}
+                isRequired
+                errorMessage={errors.email}
+                isInvalid={!!errors.email}
+              />
+          </div>
 
           {/* Guardian's Mobile */}
-          <Input
-            type="tel"
-            label="Guardian's Mobile Number"
-            placeholder="Enter guardian's mobile number"
-            value={(data.guardianMobile as string) || ""}
-            onChange={(e) => updateData({ guardianMobile: e.target.value })}
-            isRequired
-            errorMessage={errors.guardianMobile}
-            isInvalid={!!errors.guardianMobile}
-          />
+          <div className="col-span-2">
+            <Input
+              type="tel"
+              label="Guardian's Mobile Number"
+              placeholder="Enter guardian's mobile number"
+              value={(data.guardianMobile as string) || ""}
+              onChange={(e) => updateData({ guardianMobile: e.target.value })}
+              isRequired
+              errorMessage={errors.guardianMobile}
+              isInvalid={!!errors.guardianMobile}
+            />
+          </div>
 
           {/* Own Mobile */}
-          <div className="md:col-span-2">
+          <div className="col-span-2">
             <Input
               type="tel"
               label="Own Mobile Number"

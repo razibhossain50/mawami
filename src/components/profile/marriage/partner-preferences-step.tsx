@@ -1,5 +1,5 @@
 'use client';
-import { Input, Textarea, Card, CardBody, CardHeader } from "@heroui/react";
+import { Input, Textarea, Card, CardBody, CardHeader, Slider } from "@heroui/react";
 import { useState } from "react";
 
 interface PartnerPreferencesStepProps {
@@ -14,8 +14,8 @@ export function PartnerPreferencesStep({
   updateData,
 }: PartnerPreferencesStepProps) {
   const [ageRange, setAgeRange] = useState<number[]>([
-    (data.partnerAgeMin as number) || 25,
-    (data.partnerAgeMax as number) || 35,
+    (data.partnerAgeMin as number) || 18,
+    (data.partnerAgeMax as number) || 40,
   ]);
 
   const handleAgeRangeChange = (values: number[]) => {
@@ -47,80 +47,25 @@ export function PartnerPreferencesStep({
         <CardBody className="space-y-8 pt-6">
           {/* Partner Age Range */}
           <div className="space-y-4">
-            <div className="text-sm font-medium text-slate-700">
-              Preferred Age Range <span className="text-red-500">*</span>
-            </div>
-
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-              <div className="relative px-4">
-                <div className="relative h-12 flex items-center justify-between">
-                  {/* Track background */}
-                  <div className="absolute w-full h-1 bg-slate-200 rounded-full top-1/2 -translate-y-1/2"></div>
-
-                  {/* Active range */}
-                  <div
-                    className="absolute h-1 bg-gradient-to-r from-rose-500 to-rose-400 rounded-full top-1/2 -translate-y-1/2"
-                    style={{
-                      left: `${((ageRange[0] - 18) / (70 - 18)) * 100}%`,
-                      width: `${((ageRange[1] - ageRange[0]) / (70 - 18)) * 100}%`,
-                    }}
-                  />
-
-                  {/* Left (Min) Tooltip */}
-                  <div
-                    className="absolute -top-9 transform -translate-x-1/2"
-                    style={{
-                      left: `${((ageRange[0] - 18) / (70 - 18)) * 100}%`,
-                    }}
-                  >
-                    <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shadow">
-                      {ageRange[0]}
-                    </div>
-                  </div>
-
-                  {/* Right (Max) Tooltip */}
-                  <div
-                    className="absolute -top-9 transform -translate-x-1/2"
-                    style={{
-                      left: `${((ageRange[1] - 18) / (70 - 18)) * 100}%`,
-                    }}
-                  >
-                    <div className="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shadow">
-                      {ageRange[1]}
-                    </div>
-                  </div>
-
-                  {/* Sliders */}
-                  <input
-                    type="range"
-                    min="18"
-                    max="70"
-                    value={ageRange[0]}
-                    onChange={(e) => {
-                      const newMin = Math.min(
-                        parseInt(e.target.value),
-                        ageRange[1] - 1,
-                      );
-                      handleAgeRangeChange([newMin, ageRange[1]]);
-                    }}
-                    className="absolute w-full h-8 bg-transparent appearance-none cursor-pointer z-10"
-                  />
-                  <input
-                    type="range"
-                    min="18"
-                    max="70"
-                    value={ageRange[1]}
-                    onChange={(e) => {
-                      const newMax = Math.max(
-                        parseInt(e.target.value),
-                        ageRange[0] + 1,
-                      );
-                      handleAgeRangeChange([ageRange[0], newMax]);
-                    }}
-                    className="absolute w-full h-8 bg-transparent appearance-none cursor-pointer z-10"
-                  />
-                </div>
-              </div>
+              <Slider
+                className="max-w-full"
+                aria-label="Preferred Age Range"
+                label="Preferred Age Range"
+                minValue={18}
+                maxValue={70}
+                step={1}
+                value={ageRange as [number, number]}
+                onChange={(val) => {
+                  const values = Array.isArray(val) ? val : [ageRange[0], ageRange[1]];
+                  // Enforce min < max
+                  const min = Math.min(values[0], values[1] - 1);
+                  const max = Math.max(values[1], min + 1);
+                  handleAgeRangeChange([min, max]);
+                }}
+                formatOptions={{ style: "unit", unit: "year" }}
+                getValue={(vals) => Array.isArray(vals) ? `${vals[0]} - ${vals[1]} years` : `${vals} years`}
+              />
             </div>
 
             {(errors.partnerAgeMin || errors.partnerAgeMax) && (

@@ -33,6 +33,38 @@ class ApiClient {
     return localStorage.getItem(tokenKey);
   }
 
+  // Safely parse JSON from a Response, returning null for empty bodies
+  private async parseJsonSafe(response: Response): Promise<any | null> {
+    // No content status codes
+    if (response.status === 204 || response.status === 205) {
+      return null;
+    }
+
+    const contentLength = response.headers.get('content-length');
+    if (contentLength === '0') {
+      return null;
+    }
+
+    // If not JSON, try text and fall back to null
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+
+    try {
+      // Use text() to guard against empty body
+      const raw = await response.text();
+      if (!raw) {
+        return null;
+      }
+      if (isJson) {
+        return JSON.parse(raw);
+      }
+      // Non-JSON: return as-is string
+      return raw;
+    } catch {
+      return null;
+    }
+  }
+
   private async makeRequest<T>(endpoint: string, config: RequestConfig = {}): Promise<T> {
     const {
       method = 'GET',
@@ -76,13 +108,10 @@ class ApiClient {
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        let errorData: any = {};
-
-        try {
-          errorData = await response.json();
+        const parsed = await this.parseJsonSafe(response);
+        const errorData: any = typeof parsed === 'object' && parsed !== null ? parsed : {};
+        if (errorData && typeof errorData.message === 'string') {
           errorMessage = errorData.message || errorMessage;
-        } catch {
-          // Response is not JSON, use status text
         }
 
         throw new ApiError(
@@ -93,7 +122,8 @@ class ApiClient {
         );
       }
 
-      const data = await response.json();
+      const parsed = await this.parseJsonSafe(response);
+      const data = (parsed as T) ?? (null as unknown as T);
       logger.debug(`API Response: ${method} ${url}`, data, 'ApiClient');
       return data;
 
@@ -172,16 +202,15 @@ class ApiClient {
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch {
-          // Response is not JSON
+        const parsed = await this.parseJsonSafe(response);
+        if (parsed && typeof parsed === 'object' && 'message' in (parsed as any)) {
+          errorMessage = (parsed as any).message || errorMessage;
         }
         throw new ApiError(errorMessage, response.status);
       }
 
-      return await response.json();
+      const parsed = await this.parseJsonSafe(response);
+      return (parsed as T) ?? (null as unknown as T);
     } catch (error) {
       throw handleApiError(error, 'ApiClient');
     }

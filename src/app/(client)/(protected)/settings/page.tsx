@@ -86,9 +86,6 @@ export default function Settings() {
               <User className="h-5 w-5 text-blue-500" />
               <h3 className="text-lg font-semibold">Profile Settings</h3>
             </div>
-            <p className="text-sm text-gray-600">
-              Manage your profile information and preferences
-            </p>
           </CardHeader>
           <CardBody className="space-y-6">
             <div className="grid gap-6">
@@ -152,9 +149,6 @@ export default function Settings() {
               <Lock className="h-5 w-5 text-emerald-500" />
               <h3 className="text-lg font-semibold">Security</h3>
             </div>
-            <p className="text-sm text-gray-600">
-              Manage your account security settings
-            </p>
           </CardHeader>
           <CardBody>
             <Button

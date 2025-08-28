@@ -58,8 +58,6 @@ export default function FavoritesPage() {
     const [favorites, setFavorites] = useState<Biodata[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [filteredFavorites, setFilteredFavorites] = useState<Biodata[]>([]);
 
     // Fetch favorites from API
     useEffect(() => {
@@ -98,7 +96,6 @@ export default function FavoritesPage() {
                 }));
 
                 setFavorites(transformedFavorites);
-                setFilteredFavorites(transformedFavorites);
             } catch (error) {
                 const appError = handleApiError(error, 'FavoritesPage');
                 logger.error('Error fetching favorites', appError, 'FavoritesPage');
@@ -111,21 +108,6 @@ export default function FavoritesPage() {
         fetchFavorites();
     }, [isAuthenticated, user]);
 
-    // Filter favorites based on search query
-    useEffect(() => {
-        if (!searchQuery.trim()) {
-            setFilteredFavorites(favorites);
-        } else {
-            const filtered = favorites.filter(biodata =>
-                biodata.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                biodata.profession.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                biodata.presentDivision?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                biodata.biodataType.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredFavorites(filtered);
-        }
-    }, [searchQuery, favorites]);
-
     const removeFavorite = async (id: number) => {
         if (!isAuthenticated || !user) return;
 
@@ -134,7 +116,6 @@ export default function FavoritesPage() {
 
             // Update local state immediately
             setFavorites(prev => prev.filter(fav => fav.id !== id));
-            setFilteredFavorites(prev => prev.filter(fav => fav.id !== id));
         } catch (error) {
             const appError = handleApiError(error, 'FavoritesPage');
             logger.error('Error removing from favorites', appError, 'FavoritesPage');
@@ -242,66 +223,45 @@ export default function FavoritesPage() {
                             Back to Dashboard
                         </Button>
                     </div>
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                        <div>
-                            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent mb-4 leading-tight">
-                                Your Favorites
-                            </h1>
-                            <p className="text-slate-600 text-xl leading-relaxed">
-                                {favorites.length} profile{favorites.length !== 1 ? 's' : ''} saved for later
-                            </p>
-                        </div>
-
-                        {/* Search Bar */}
-                        {favorites.length > 0 && (
-                            <div className="w-full lg:w-96">
-                                <Input
-                                    size="lg"
-                                    placeholder="Search your favorites..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    startContent={<Search className="h-5 w-5 text-slate-400" />}
-                                    className="bg-white/80 backdrop-blur-sm"
-                                />
-                            </div>
-                        )}
+                    <div>
+                        <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent mb-4 leading-tight">
+                            Your Favorites
+                        </h1>
+                        <p className="text-slate-600 text-xl leading-relaxed">
+                            {favorites.length} profile{favorites.length !== 1 ? 's' : ''} saved for later
+                        </p>
                     </div>
                 </div>
 
                 {/* Favorites List Table */}
-                {filteredFavorites.length > 0 ? (
+                {favorites.length > 0 ? (
                     <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
                         <CardBody className="p-0">
-                            <Table
-                                aria-label="Favorites table"
-                                className="min-h-[400px]"
-                                removeWrapper
-                            >
-                                <TableHeader>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
-                                        SL
-                                    </TableColumn>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold">
-                                        PROFILE
-                                    </TableColumn>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
-                                        BIODATA NO.
-                                    </TableColumn>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold">
-                                        DETAILS
-                                    </TableColumn>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold">
-                                        LOCATION
-                                    </TableColumn>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
-                                        DATE ADDED
-                                    </TableColumn>
-                                    <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
-                                        ACTIONS
-                                    </TableColumn>
-                                </TableHeader>
+                            <div className="overflow-x-auto">
+                                <Table
+                                    aria-label="Favorites table"
+                                    className="min-h-[400px]"
+                                    removeWrapper
+                                >
+                                    <TableHeader>
+                                        <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
+                                            SL
+                                        </TableColumn>
+                                        <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold">
+                                            PROFILE
+                                        </TableColumn>
+                                        <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
+                                            BIODATA NO.
+                                        </TableColumn>
+                                        <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center">
+                                            DATE ADDED
+                                        </TableColumn>
+                                        <TableColumn className="bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold text-center sticky right-0 z-10">
+                                            ACTIONS
+                                        </TableColumn>
+                                    </TableHeader>
                                 <TableBody>
-                                    {filteredFavorites.map((biodata, index) => (
+                                    {favorites.map((biodata, index) => (
                                         <TableRow key={biodata.id} className="hover:bg-rose-50/50 transition-colors">
                                             <TableCell className="text-center font-semibold text-slate-700">
                                                 {index + 1}
@@ -332,34 +292,12 @@ export default function FavoritesPage() {
                                                     {biodata.id}
                                                 </Chip>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-slate-500">Age:</span>
-                                                        <span className="text-sm font-medium">{biodata.age}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-slate-500">Height:</span>
-                                                        <span className="text-sm font-medium">{biodata.height}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-slate-500">Status:</span>
-                                                        <span className="text-sm font-medium">{biodata.maritalStatus}</span>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="space-y-1">
-                                                    <p className="text-sm font-medium text-slate-800">{biodata.presentDivision}</p>
-                                                    <p className="text-xs text-slate-600">{biodata.presentZilla}</p>
-                                                </div>
-                                            </TableCell>
                                             <TableCell className="text-center">
                                                 <p className="text-sm text-slate-600">
                                                     {biodata.dateAdded ? new Date(biodata.dateAdded).toLocaleDateString() : 'N/A'}
                                                 </p>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="sticky right-0 z-10 bg-white/90 backdrop-blur-sm">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <Tooltip content="View Profile" placement="top">
                                                         <Button
@@ -401,6 +339,7 @@ export default function FavoritesPage() {
                                     ))}
                                 </TableBody>
                             </Table>
+                        </div>
                         </CardBody>
                     </Card>
                 ) : favorites.length === 0 ? (
@@ -449,12 +388,13 @@ export default function FavoritesPage() {
                                 No favorites match your search criteria. Try adjusting your search terms.
                             </p>
                             <Button
-                                onPress={() => setSearchQuery("")}
+                                as={Link}
+                                href="/search"
                                 variant="flat"
                                 className="bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-200"
-                                startContent={<Filter className="h-4 w-4" />}
+                                startContent={<Search className="h-4 w-4" />}
                             >
-                                Clear Search
+                                Explore Profiles
                             </Button>
                         </CardBody>
                     </Card>

@@ -151,21 +151,22 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Biodata Status Toggle */}
-        {statusInfo && (
-          <div className="mb-8">
-            <BiodataStatusToggle
-              biodataId={statusInfo.id}
-              biodataApprovalStatus={statusInfo.biodataApprovalStatus}
-              biodataVisibilityStatus={statusInfo.biodataVisibilityStatus}
-              canUserToggle={statusInfo.canUserToggle}
-              onStatusChange={handleStatusChange}
-            />
-          </div>
-        )}
+        
 
         {/* Stats Grid */}
         <div className="grid gap-8 md:grid-cols-3 mb-10">
+          {/* Biodata Status Toggle */}
+          {statusInfo && (
+            <div className="">
+              <BiodataStatusToggle
+                biodataId={statusInfo.id}
+                biodataApprovalStatus={statusInfo.biodataApprovalStatus}
+                biodataVisibilityStatus={statusInfo.biodataVisibilityStatus}
+                canUserToggle={statusInfo.canUserToggle}
+                onStatusChange={handleStatusChange}
+              />
+            </div>
+          )}
           {/* Profile Visits Card */}
           <Card className="bg-white/80 backdrop-blur-sm hover:bg-white/95 transition-all duration-500 border-0 shadow-xl hover:shadow-2xl group overflow-hidden">
             <CardBody className="p-8">
@@ -275,7 +276,7 @@ export default function Dashboard() {
 
 
         {/* Purchase History */}
-        <Card className="bg-white/70 backdrop-blur-sm border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300">
+        {/* <Card className="bg-white/70 backdrop-blur-sm border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center">
@@ -337,7 +338,7 @@ export default function Dashboard() {
               </Button>
             </div>
           </CardBody>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );

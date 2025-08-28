@@ -308,9 +308,9 @@ export default function BiodataForm() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-5xl mx-auto px-3 md:px-6 lg:px-8 py-8">
                 {/* Back Button */}
-                <div className="mb-6">
+                <div className="text-center mb-6">
                     <Button
                         variant="bordered"
                         as={Link}
@@ -359,6 +359,7 @@ export default function BiodataForm() {
                         {/* Navigation Buttons */}
                         <div className="flex justify-between items-center pt-6 border-t border-slate-200 mt-8">
                             <Button
+                                className="px-3"
                                 variant="bordered"
                                 onClick={prevStep}
                                 isDisabled={isFirstStep}
@@ -373,10 +374,10 @@ export default function BiodataForm() {
 
                             {isLastStep ? (
                                 <Button
-                                    color="success"
+                                    className="px-3"
+                                    color="primary"
                                     onClick={handleSubmit}
                                     isDisabled={submitMutation.isPending || saveStepMutation.isPending}
-                                    startContent={<Check className="w-4 h-4" />}
                                 >
                                     {submitMutation.isPending
                                         ? (isCreateMode ? "Creating..." : "Updating...")

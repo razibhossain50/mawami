@@ -75,7 +75,7 @@ export function FamilyInfoStep({ data, errors, updateData }: FamilyInfoStepProps
 
         {/* Father Information */}
         <Card className="shadow-sm">
-          <CardHeader className="border-b">
+          <CardHeader className="border-b border-gray-200">
             <h3 className="text-lg font-semibold text-slate-800">Father&apos;s Information</h3>
           </CardHeader>
           <CardBody className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
@@ -117,7 +117,7 @@ export function FamilyInfoStep({ data, errors, updateData }: FamilyInfoStepProps
 
         {/* Mother Information */}
         <Card className="shadow-sm">
-          <CardHeader className="border-b">
+          <CardHeader className="border-b border-gray-200">
             <h3 className="text-lg font-semibold text-slate-800">Mother&apos;s Information</h3>
           </CardHeader>
           <CardBody className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
