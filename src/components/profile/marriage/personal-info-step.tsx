@@ -90,16 +90,32 @@ export function PersonalInfoStep({ data, errors, updateData }: PersonalInfoStepP
     }
   }, [data.dateOfBirth]);
 
+  // Check if permanent address fields are complete
+  const isPermanentAddressComplete = () => {
+    const permanentLocation = data.permanentLocation as string;
+    const permanentArea = data.permanentArea as string;
+    return !!(permanentLocation && permanentArea && 
+              permanentLocation.trim() !== '' && permanentArea.trim() !== '');
+  };
+
   const handleSameAddressChange = (checked: boolean) => {
+    // Only allow checking if permanent address is complete
+    if (checked && !isPermanentAddressComplete()) {
+      return;
+    }
+
     updateData({ sameAsPermanent: checked });
 
     if (checked) {
       updateData({
-        presentCountry: data.permanentCountry,
-        presentDivision: data.permanentDivision,
-        presentZilla: data.permanentZilla,
-        presentUpazilla: data.permanentUpazilla,
+        presentLocation: data.permanentLocation,
         presentArea: data.permanentArea,
+      });
+    } else {
+      // When unchecking, clear present address fields to force user to fill them
+      updateData({
+        presentLocation: '',
+        presentArea: '',
       });
     }
   };
@@ -176,7 +192,6 @@ export function PersonalInfoStep({ data, errors, updateData }: PersonalInfoStepP
               isRequired
               errorMessage={errors.dateOfBirth}
               isInvalid={!!errors.dateOfBirth}
-              description={calculatedAge !== null ? `Age: ${calculatedAge} years` : undefined}
             />
           </div>
           {/* Height */}
@@ -271,12 +286,15 @@ export function PersonalInfoStep({ data, errors, updateData }: PersonalInfoStepP
           <div>
             <div className="rounded-lg bg-slate-50 p-4 shadow-inner">
               <LocationSelector
-                dataSource="addressData"
-                type="permanent"
+                name="permanentLocation"
                 data={data}
                 errors={errors}
                 updateData={updateData}
-                onLocationSelect={() => {}} // Not used in addressData mode
+                onLocationSelect={() => {}}
+                label="Permanent Address"
+                placeholder="Select permanent address"
+                value={data.permanentLocation as string}
+                isRequired
               />
               <div className="mt-4">
                 <Input
@@ -297,8 +315,14 @@ export function PersonalInfoStep({ data, errors, updateData }: PersonalInfoStepP
             <Checkbox
               isSelected={(data.sameAsPermanent as boolean) || false}
               onValueChange={handleSameAddressChange}
+              isDisabled={!isPermanentAddressComplete()}
             >
               Present address is same as permanent address
+              {!isPermanentAddressComplete() && (
+                <span className="text-sm text-gray-500 ml-2">
+                  (Complete permanent address first)
+                </span>
+              )}
             </Checkbox>
           </div>
 
@@ -306,12 +330,15 @@ export function PersonalInfoStep({ data, errors, updateData }: PersonalInfoStepP
           <div className={`${data.sameAsPermanent ? "opacity-50 pointer-events-none" : ""}`}>
             <div className="rounded-lg bg-slate-50 p-4 shadow-inner">
               <LocationSelector
-                dataSource="addressData"
-                type="present"
+                name="presentLocation"
                 data={data}
                 errors={errors}
                 updateData={updateData}
-                onLocationSelect={() => {}} // Not used in addressData mode
+                onLocationSelect={() => {}}
+                label="Present Address"
+                placeholder="Select present address"
+                value={data.presentLocation as string}
+                isRequired
               />
               <div className="mt-4">
                 <Input

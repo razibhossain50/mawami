@@ -15,19 +15,11 @@ const biodataSchema = z.object({
   profession: z.string().min(1, "Profession is required"),
   bloodGroup: z.string().min(1, "Blood group is required"),
   
-  // Address Information - Individual components are required, combined strings are optional
-  permanentAddress: z.string().optional(),
-  permanentCountry: z.string().min(1, "Permanent country is required"),
-  permanentDivision: z.string().min(1, "Permanent division is required"),
-  permanentZilla: z.string().min(1, "Permanent zilla is required"),
-  permanentUpazilla: z.string().min(1, "Permanent upazilla is required"),
+  // Address Information - Using new LocationSelector field names
+  permanentLocation: z.string().min(1, "Permanent location is required"),
   permanentArea: z.string().min(1, "Permanent area is required"),
   
-  presentAddress: z.string().optional(),
-  presentCountry: z.string().min(1, "Present country is required"),
-  presentDivision: z.string().min(1, "Present division is required"),
-  presentZilla: z.string().min(1, "Present zilla is required"),
-  presentUpazilla: z.string().min(1, "Present upazilla is required"),
+  presentLocation: z.string().min(1, "Present location is required"),
   presentArea: z.string().min(1, "Present area is required"),
   sameAsPermanent: z.boolean().default(false),
   
@@ -84,15 +76,9 @@ const stepSchemas = [
     complexion: true,
     profession: true,
     bloodGroup: true,
-    permanentCountry: true,
-    permanentDivision: true,
-    permanentZilla: true,
-    permanentUpazilla: true,
+    permanentLocation: true,
     permanentArea: true,
-    presentCountry: true,
-    presentDivision: true,
-    presentZilla: true,
-    presentUpazilla: true,
+    presentLocation: true,
     presentArea: true,
     healthIssues: true,
   }),
@@ -155,13 +141,26 @@ export function useStepForm(totalSteps: number) {
   };
 
   const loadFormData = useCallback((data: any) => {
+    // Convert old address field names to new field names
+    const convertedData = { ...data };
+    
+    // Convert permanent address fields
+    if (data.permanentCountry && data.permanentDivision && data.permanentZilla && data.permanentUpazilla) {
+      convertedData.permanentLocation = `${data.permanentCountry} > ${data.permanentDivision} > ${data.permanentZilla} > ${data.permanentUpazilla}`;
+    }
+    
+    // Convert present address fields
+    if (data.presentCountry && data.presentDivision && data.presentZilla && data.presentUpazilla) {
+      convertedData.presentLocation = `${data.presentCountry} > ${data.presentDivision} > ${data.presentZilla} > ${data.presentUpazilla}`;
+    }
+    
     setFormData((prev: any) => ({
       ...prev,
-      ...data,
+      ...convertedData,
       // Ensure default values are preserved if not in loaded data
-      partnerAgeMin: data.partnerAgeMin || 25,
-      partnerAgeMax: data.partnerAgeMax || 35,
-      sameAsPermanent: data.sameAsPermanent || false,
+      partnerAgeMin: convertedData.partnerAgeMin || 25,
+      partnerAgeMax: convertedData.partnerAgeMax || 35,
+      sameAsPermanent: convertedData.sameAsPermanent || false,
     }));
     // Clear any existing errors when loading data
     setErrors({});
@@ -172,7 +171,68 @@ export function useStepForm(totalSteps: number) {
     if (!stepSchema) return true;
 
     try {
-      stepSchema.parse(formData);
+      // For step 1, handle conditional validation for present address
+      if (currentStep === 1) {
+        const validationData = { ...formData };
+        
+        // Additional validation: ensure required fields are present
+        const requiredFields = [
+          'religion', 'biodataType', 'maritalStatus', 'dateOfBirth', 'age',
+          'height', 'weight', 'complexion', 'profession', 'bloodGroup',
+          'permanentLocation', 'permanentArea', 'healthIssues'
+        ];
+        
+        // Check if all required fields are present
+        for (const field of requiredFields) {
+          if (!validationData[field]) {
+            setErrors({ [field]: `${field} is required` });
+            return false;
+          }
+        }
+        
+        // Check present address requirements
+        if (!formData.sameAsPermanent) {
+          const presentAddressErrors: any = {};
+          let hasPresentAddressError = false;
+          
+          // Check present location
+          if (!validationData.presentLocation || validationData.presentLocation.trim() === '') {
+            presentAddressErrors.presentLocation = 'Present location is required';
+            hasPresentAddressError = true;
+          }
+          
+          // Check present area
+          if (!validationData.presentArea || validationData.presentArea.trim() === '') {
+            presentAddressErrors.presentArea = 'Present area is required';
+            hasPresentAddressError = true;
+          }
+          
+          if (hasPresentAddressError) {
+            setErrors(presentAddressErrors);
+            return false;
+          }
+        } else {
+          // If sameAsPermanent is true, copy permanent data to present data for validation
+          if (validationData.permanentLocation && validationData.permanentArea && 
+              validationData.permanentLocation.trim() !== '' && validationData.permanentArea.trim() !== '') {
+            validationData.presentLocation = validationData.permanentLocation;
+            validationData.presentArea = validationData.permanentArea;
+          } else {
+            // If sameAsPermanent is true but permanent data is missing, that's an error
+            setErrors({ 
+              permanentLocation: 'Permanent location is required when present address is same as permanent',
+              permanentArea: 'Permanent area is required when present address is same as permanent'
+            });
+            return false;
+          }
+        }
+        
+        // Now run Zod validation with the prepared data
+        stepSchema.parse(validationData);
+      } else {
+        stepSchema.parse(formData);
+      }
+      
       setErrors({});
       return true;
     } catch (error) {

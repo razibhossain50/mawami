@@ -102,13 +102,49 @@ export default function BiodataForm() {
         enabled: !!biodataId,
     });
 
+    // Function to convert new field names back to old field names for backend compatibility
+    const convertToBackendFormat = (data: Record<string, unknown>) => {
+        const convertedData = { ...data };
+        
+        // Convert permanentLocation back to individual fields
+        if (data.permanentLocation && typeof data.permanentLocation === 'string') {
+            const parts = (data.permanentLocation as string).split(' > ');
+            if (parts.length >= 4) {
+                convertedData.permanentCountry = parts[0];
+                convertedData.permanentDivision = parts[1];
+                convertedData.permanentZilla = parts[2];
+                convertedData.permanentUpazilla = parts[3];
+            }
+        }
+        
+        // Convert presentLocation back to individual fields
+        if (data.presentLocation && typeof data.presentLocation === 'string') {
+            const parts = (data.presentLocation as string).split(' > ');
+            if (parts.length >= 4) {
+                convertedData.presentCountry = parts[0];
+                convertedData.presentDivision = parts[1];
+                convertedData.presentZilla = parts[2];
+                convertedData.presentUpazilla = parts[3];
+            }
+        }
+        
+        // Remove new field names to avoid confusion
+        delete convertedData.permanentLocation;
+        delete convertedData.presentLocation;
+        
+        return convertedData;
+    };
+
     // Mutation for saving step data
     const saveStepMutation = useMutation({
         mutationFn: async ({ stepData, step }: { stepData: Record<string, unknown>; step: number }) => {
+            // Convert new field names to backend format
+            const convertedStepData = convertToBackendFormat(stepData);
+            
             // For both create and edit mode, we use PUT /current to update user's biodata
             // This endpoint will create if doesn't exist, or update if exists
             const payload = {
-                ...stepData,
+                ...convertedStepData,
                 step,
                 completedSteps: step === 1 ? [step] : [...(existingBiodata?.completedSteps || []), step].filter((s, i, arr) => arr.indexOf(s) === i), // Add current step to completed steps
             };
@@ -140,10 +176,13 @@ export default function BiodataForm() {
     // Final submission mutation
     const submitMutation = useMutation({
         mutationFn: async (data: Record<string, unknown>) => {
+            // Convert new field names to backend format
+            const convertedData = convertToBackendFormat(data);
+            
             // For both create and edit mode, use PUT /current for final submission
             // This ensures the biodata is associated with the current logged-in user
             const payload = {
-                ...data,
+                ...convertedData,
                 biodataApprovalStatus: 'pending',
                 biodataVisibilityStatus: 'active',
                 completedSteps: [1, 2, 3, 4, 5], // Mark all steps as completed
@@ -204,16 +243,34 @@ export default function BiodataForm() {
     }
 
     const handleNext = async () => {
+        // Prevent multiple clicks
+        if (saveStepMutation.isPending) {
+            return;
+        }
+        
         const isValid = validateCurrentStep();
+        
         if (!isValid) {
             return;
         }
 
-        // Save current step data - nextStep() will be called in onSuccess callback
-        saveStepMutation.mutate({
-            stepData: formData,
-            step: currentStep,
-        });
+        try {
+            // Save current step data - nextStep() will be called in onSuccess callback
+            saveStepMutation.mutate({
+                stepData: formData,
+                step: currentStep,
+            });
+            
+            // Fallback: if mutation doesn't complete within 5 seconds, proceed anyway
+            setTimeout(() => {
+                if (saveStepMutation.isPending) {
+                    nextStep();
+                }
+            }, 5000);
+        } catch (error) {
+            // If there's an error, still proceed to next step
+            nextStep();
+        }
     };
 
     const handleSubmit = async () => {

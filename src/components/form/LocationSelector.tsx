@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, X, ChevronRight, ChevronDown } from "lucide-react";
 import { geoLocation } from "../../api/geo-location";
-import { addressData } from "../../api/address-data";
 
 type SelectionPath = {
   country?: string;
@@ -12,8 +11,6 @@ type SelectionPath = {
 
 type Level = "country" | "division" | "district" | "upazila";
 
-type DataSource = "geoLocation" | "addressData";
-
 type LocationOption = {
   name: string;
   value: string;
@@ -23,27 +20,34 @@ type LocationOption = {
 interface LocationSelectorProps {
   onLocationSelect: (location: string) => void;
   value?: string;
-  dataSource?: DataSource;
-  type?: "permanent" | "present"; // For addressData compatibility
-  data?: Record<string, unknown>; // For addressData compatibility
-  errors?: Record<string, string>; // For addressData compatibility
-  updateData?: (data: Partial<Record<string, unknown>>) => void; // For addressData compatibility
-  id?: string; // For accessibility label association
-  "aria-labelledby"?: string; // For accessibility label association
-  "aria-label"?: string; // For accessibility label
+  // Form integration props
+  name?: string; // Form field name
+  data?: Record<string, unknown>; // Form data
+  errors?: Record<string, string>; // Form errors
+  updateData?: (data: Partial<Record<string, unknown>>) => void; // Form update function
+  // Accessibility props
+  id?: string;
+  "aria-labelledby"?: string;
+  "aria-label"?: string;
+  // Display props
+  placeholder?: string;
+  label?: string;
+  isRequired?: boolean; // Whether the field is required
 }
 
 export function LocationSelector({
   onLocationSelect,
   value,
-  dataSource = "geoLocation",
-  type = "permanent",
+  name,
   data: formData,
   errors,
   updateData,
   id,
   "aria-labelledby": ariaLabelledBy,
-  "aria-label": ariaLabel
+  "aria-label": ariaLabel,
+  placeholder = "Select location",
+  label = "Select Your Location",
+  isRequired = false
 }: LocationSelectorProps) {
   const [currentLevel, setCurrentLevel] = useState<Level>("country");
   const [selectionPath, setSelectionPath] = useState<SelectionPath>({});
@@ -52,19 +56,8 @@ export function LocationSelector({
 
   const locationContainerRef = useRef<HTMLDivElement>(null);
 
-  // Choose data source based on prop
-  const sourceData = dataSource === "geoLocation" ? geoLocation[0] : null;
-
-  // For addressData compatibility
-  const countryKey = `${type}Country`;
-  const divisionKey = `${type}Division`;
-  const zillaKey = `${type}Zilla`;
-  const upazillaKey = `${type}Upazilla`;
-
-  const selectedCountry = formData?.[countryKey] as string;
-  const selectedDivision = formData?.[divisionKey] as string;
-  const selectedZilla = formData?.[zillaKey] as string;
-  const selectedUpazilla = formData?.[upazillaKey] as string;
+  // Get data from geoLocation
+  const sourceData = geoLocation[0];
 
   // Sync internal state with external value prop
   useEffect(() => {
@@ -74,204 +67,136 @@ export function LocationSelector({
   }, [value]);
 
   // Check if an option has children (should show arrow)
-  const hasChildren = (value: string, level: Level) => {
-    if (dataSource === "geoLocation") {
-      switch (level) {
-        case "country":
-          return true; // Country always has divisions
-        case "division":
-          if (value === "All Divisions") return false; // "All Divisions" doesn't have children
-          const division = sourceData?.divisions.find((div) => div.name === value);
-          return division && division.districts && division.districts.length > 0;
-        case "district":
-          if (value === "All Districts") return false; // "All Districts" doesn't have children
-          const selectedDivision = sourceData?.divisions.find((div) => div.name === selectionPath.division);
-          const district = selectedDivision?.districts?.find((dist) => dist.name === value);
-          return district && district.upazilas && district.upazilas.length > 0;
-        case "upazila":
-          if (value === "All Upazilas") return false;
-          return false; // Upazilas are the final level, no children
-        default:
-          return false;
-      }
-    } else {
-      // addressData logic
-      switch (level) {
-        case "country":
-          return true;
-        case "division":
-          return selectedCountry && addressData[selectedCountry]?.divisions[value];
-        case "district":
-          return selectedCountry && selectedDivision &&
-            addressData[selectedCountry]?.divisions[selectedDivision]?.districts[value];
-        case "upazila":
-          return false; // Final level
-        default:
-          return false;
-      }
+  const hasChildren = (value: string, level: Level): boolean => {
+    switch (level) {
+      case "country":
+        return true; // Country always has divisions
+      case "division":
+        if (value === "All Divisions") return false; // "All Divisions" doesn't have children
+        const division = sourceData?.divisions.find((div) => div.name === value);
+        return !!(division && division.districts && division.districts.length > 0);
+      case "district":
+        if (value === "All Districts") return false; // "All Districts" doesn't have children
+        const selectedDivision = sourceData?.divisions.find((div) => div.name === selectionPath.division);
+        const district = selectedDivision?.districts?.find((dist) => dist.name === value);
+        return !!(district && district.upazilas && district.upazilas.length > 0);
+      case "upazila":
+        if (value === "All Upazilas") return false;
+        return false; // Upazilas are the final level, no children
+      default:
+        return false;
     }
   };
 
   // Get current location options based on level and selection path
   const getCurrentLocationOptions = (): LocationOption[] => {
-    if (dataSource === "geoLocation") {
-      switch (currentLevel) {
-        case "country":
-          return [{ name: sourceData?.country || "", value: sourceData?.country || "", hasChildren: hasChildren(sourceData?.country || "", "country") }];
-        case "division":
-          return sourceData?.divisions.map((div) => ({
-            name: div.name,
-            value: div.name,
-            hasChildren: hasChildren(div.name, "division")
-          })) || [];
-        case "district":
-          const selectedDivision = sourceData?.divisions.find((div) => div.name === selectionPath.division);
-          if (!selectedDivision || !selectedDivision.districts) return [];
+    switch (currentLevel) {
+      case "country":
+        return [{ name: sourceData?.country || "", value: sourceData?.country || "", hasChildren: hasChildren(sourceData?.country || "", "country") }];
+      case "division":
+        return sourceData?.divisions.map((div) => ({
+          name: div.name,
+          value: div.name,
+          hasChildren: hasChildren(div.name, "division")
+        })) || [];
+      case "district":
+        const selectedDivision = sourceData?.divisions.find((div) => div.name === selectionPath.division);
+        if (!selectedDivision || !selectedDivision.districts) return [];
 
-          return selectedDivision.districts.map((dist) => ({
-            name: dist.name,
-            value: dist.name,
-            hasChildren: hasChildren(dist.name, "district")
-          }));
-        case "upazila":
-          const division = sourceData?.divisions.find((div) => div.name === selectionPath.division);
-          const selectedDistrict = division?.districts?.find((dist) => dist.name === selectionPath.district);
-          return selectedDistrict?.upazilas?.map((upazila) => ({
-            name: upazila,
-            value: upazila,
-            hasChildren: false
-          })) || [];
-        default:
-          return [];
-      }
-    } else {
-      // addressData logic
-      switch (currentLevel) {
-        case "country":
-          return Object.keys(addressData).map(code => ({
-            name: addressData[code].name,
-            value: code,
-            hasChildren: hasChildren(code, "country")
-          }));
-        case "division":
-          if (!selectedCountry) return [];
-          return Object.keys(addressData[selectedCountry].divisions).map(code => ({
-            name: addressData[selectedCountry].divisions[code].name,
-            value: code,
-            hasChildren: hasChildren(code, "division")
-          }));
-        case "district":
-          if (!selectedCountry || !selectedDivision) return [];
-          return Object.keys(addressData[selectedCountry].divisions[selectedDivision].districts).map(code => ({
-            name: addressData[selectedCountry].divisions[selectedDivision].districts[code].name,
-            value: code,
-            hasChildren: hasChildren(code, "district")
-          }));
-        case "upazila":
-          if (!selectedCountry || !selectedDivision || !selectedZilla) return [];
-          return addressData[selectedCountry].divisions[selectedDivision].districts[selectedZilla].upazilas.map((name: string) => ({
-            name: name,
-            value: name,
-            hasChildren: false
-          }));
-        default:
-          return [];
-      }
+        return selectedDivision.districts.map((dist) => ({
+          name: dist.name,
+          value: dist.name,
+          hasChildren: hasChildren(dist.name, "district")
+        }));
+      case "upazila":
+        const division = sourceData?.divisions.find((div) => div.name === selectionPath.division);
+        const selectedDistrict = division?.districts?.find((dist) => dist.name === selectionPath.district);
+        return selectedDistrict?.upazilas?.map((upazila) => ({
+          name: upazila,
+          value: upazila,
+          hasChildren: false
+        })) || [];
+      default:
+        return [];
     }
   };
 
   // Handle location selection
-  const handleLocationSelection = (value: string, label?: string) => {
-    if (dataSource === "geoLocation") {
-      const newPath = { ...selectionPath };
+  const handleLocationSelection = (value: string) => {
+    const newPath = { ...selectionPath };
 
-      switch (currentLevel) {
-        case "country":
-          newPath.country = value;
-          setSelectionPath(newPath);
-          setCurrentLevel("division");
-          break;
-        case "division":
-          if (value === "All Divisions") {
-            // Close dropdown and set selection
-            const fullPath = `${newPath.country} > All Divisions`;
-            setLocationSelection(fullPath);
-            onLocationSelect(fullPath);
-            setIsLocationDropdownOpen(false);
-            return;
-          }
-          newPath.division = value;
-          setSelectionPath(newPath);
-          setCurrentLevel("district");
-          break;
-        case "district":
-          if (value === "All Districts") {
-            // Close dropdown and set selection
-            const fullPath = `${newPath.country} > ${newPath.division} > All Districts`;
-            setLocationSelection(fullPath);
-            onLocationSelect(fullPath);
-            setIsLocationDropdownOpen(false);
-            return;
-          }
-          newPath.district = value;
-          setSelectionPath(newPath);
-          setCurrentLevel("upazila");
-          break;
-        case "upazila":
-          if (value === "All Upazilas") {
-            // Close dropdown and set selection
-            const fullPath = `${newPath.country} > ${newPath.division} > ${newPath.district} > All Upazilas`;
-            setLocationSelection(fullPath);
-            onLocationSelect(fullPath);
-            setIsLocationDropdownOpen(false);
-            return;
-          }
-          newPath.upazila = value;
-          setSelectionPath(newPath);
-          const fullPath = `${newPath.country} > ${newPath.division} > ${newPath.district} > ${value}`;
+    switch (currentLevel) {
+      case "country":
+        newPath.country = value;
+        setSelectionPath(newPath);
+        setCurrentLevel("division");
+        break;
+      case "division":
+        if (value === "All Divisions") {
+          // Close dropdown and set selection
+          const fullPath = `${newPath.country} > All Divisions`;
           setLocationSelection(fullPath);
           onLocationSelect(fullPath);
+          
+          // Update form data if available
+          if (updateData && name) {
+            updateData({ [name]: fullPath });
+          }
+          
           setIsLocationDropdownOpen(false);
-          break;
-      }
-    } else {
-      // addressData logic - update form data directly
-      const updates: Record<string, string> = {};
-      const displayLabel = label || value;
-
-      switch (currentLevel) {
-        case "country":
-          updates[countryKey] = value;
-          updates[divisionKey] = "";
-          updates[zillaKey] = "";
-          updates[upazillaKey] = "";
-          setSelectionPath({ country: displayLabel });
-          setCurrentLevel("division");
-          break;
-        case "division":
-          updates[divisionKey] = value;
-          updates[zillaKey] = "";
-          updates[upazillaKey] = "";
-          setSelectionPath(prev => ({ ...prev, division: displayLabel }));
-          setCurrentLevel("district");
-          break;
-        case "district":
-          updates[zillaKey] = value;
-          updates[upazillaKey] = "";
-          setSelectionPath(prev => ({ ...prev, district: displayLabel }));
-          setCurrentLevel("upazila");
-          break;
-        case "upazila":
-          updates[upazillaKey] = value;
-          setSelectionPath(prev => ({ ...prev, upazila: displayLabel }));
+          return;
+        }
+        newPath.division = value;
+        setSelectionPath(newPath);
+        setCurrentLevel("district");
+        break;
+      case "district":
+        if (value === "All Districts") {
+          // Close dropdown and set selection
+          const fullPath = `${newPath.country} > ${newPath.division} > All Districts`;
+          setLocationSelection(fullPath);
+          onLocationSelect(fullPath);
+          
+          // Update form data if available
+          if (updateData && name) {
+            updateData({ [name]: fullPath });
+          }
+          
           setIsLocationDropdownOpen(false);
-          setCurrentLevel("country");
-          break;
-      }
-
-      if (updateData) {
-        updateData(updates);
-      }
+          return;
+        }
+        newPath.district = value;
+        setSelectionPath(newPath);
+        setCurrentLevel("upazila");
+        break;
+      case "upazila":
+        if (value === "All Upazilas") {
+          // Close dropdown and set selection
+          const fullPath = `${newPath.country} > ${newPath.division} > ${newPath.district} > All Upazilas`;
+          setLocationSelection(fullPath);
+          onLocationSelect(fullPath);
+          
+          // Update form data if available
+          if (updateData && name) {
+            updateData({ [name]: fullPath });
+          }
+          
+          setIsLocationDropdownOpen(false);
+          return;
+        }
+        newPath.upazila = value;
+        setSelectionPath(newPath);
+        const fullPath = `${newPath.country} > ${newPath.division} > ${newPath.district} > ${value}`;
+        setLocationSelection(fullPath);
+        onLocationSelect(fullPath);
+        
+        // Update form data if available
+        if (updateData && name) {
+          updateData({ [name]: fullPath });
+        }
+        
+        setIsLocationDropdownOpen(false);
+        break;
     }
   };
 
@@ -282,18 +207,11 @@ export function LocationSelector({
     setCurrentLevel("country");
     setIsLocationDropdownOpen(true);
 
-    if (dataSource === "geoLocation") {
-      onLocationSelect("");
-    } else {
-      // Reset addressData form fields
-      if (updateData) {
-        updateData({
-          [countryKey]: "",
-          [divisionKey]: "",
-          [zillaKey]: "",
-          [upazillaKey]: "",
-        });
-      }
+    onLocationSelect("");
+    
+    // Update form data if available
+    if (updateData && name) {
+      updateData({ [name]: "" });
     }
   };
 
@@ -318,26 +236,6 @@ export function LocationSelector({
     };
   }, []);
 
-  // Get display value for addressData mode
-  const getAddressDataDisplayValue = () => {
-    if (!formData) return "";
-
-    const parts = [];
-    if (selectedCountry) parts.push(addressData[selectedCountry]?.name);
-    if (selectedDivision) parts.push(addressData[selectedCountry]?.divisions[selectedDivision]?.name);
-    if (selectedZilla) parts.push(addressData[selectedCountry]?.divisions[selectedDivision]?.districts[selectedZilla]?.name);
-    if (selectedUpazilla) parts.push(selectedUpazilla);
-
-    return parts.length > 0 ? parts.join(' > ') : '';
-  };
-
-  // Handle breadcrumb click for addressData
-  const handleAddressDataBreadcrumbClick = (index: number) => {
-    const levels = ['country', 'division', 'district', 'upazila'];
-    const nextLevel = levels[index + 1] as Level;
-    setCurrentLevel(nextLevel || 'country');
-  };
-
   const levelTitles = {
     country: "Select Country",
     division: "Select Division",
@@ -345,18 +243,13 @@ export function LocationSelector({
     upazila: "Select Upazila",
   };
 
-  // Get display value for both data sources
+  // Get display value
   const getDisplayValue = () => {
-    if (dataSource === "addressData") {
-      return getAddressDataDisplayValue();
-    }
-
-    // For geoLocation, build display value from current selection path
     if (locationSelection) {
       return locationSelection;
     }
 
-    // Build partial path for geoLocation based on current selections
+    // Build partial path based on current selections
     const parts = [];
     if (selectionPath.country) parts.push(selectionPath.country);
     if (selectionPath.division) parts.push(selectionPath.division);
@@ -366,25 +259,18 @@ export function LocationSelector({
     return parts.length > 0 ? parts.join(' > ') : '';
   };
 
-  // Get breadcrumb items for both data sources
-  const getBreadcrumbItems = () => {
-    if (dataSource === "addressData") {
-      const breadcrumbItems = [];
-      if (selectedCountry) breadcrumbItems.push({ level: 'country', value: selectedCountry, label: addressData[selectedCountry]?.name });
-      if (selectedDivision) breadcrumbItems.push({ level: 'division', value: selectedDivision, label: addressData[selectedCountry]?.divisions[selectedDivision]?.name });
-      if (selectedZilla) breadcrumbItems.push({ level: 'district', value: selectedZilla, label: addressData[selectedCountry]?.divisions[selectedDivision]?.districts[selectedZilla]?.name });
-      return breadcrumbItems;
-    }
-    return [];
-  };
-
   const displayValue = getDisplayValue();
-  const breadcrumbItems = getBreadcrumbItems();
+  
+  // Get error message for form integration
+  const errorMessage = name && errors ? errors[name] : undefined;
+  const hasError = !!errorMessage;
 
   return (
     <div className="relative" ref={locationContainerRef}>
       <div
-        className="w-full px-3 py-[10px] rounded-[14px] h-16 bg-[#f4f4f5] cursor-pointer hover:bg-muted/50 transition-colors"
+        className={`w-full px-3 py-[10px] rounded-[14px] h-16 bg-[#f4f4f5] cursor-pointer hover:bg-muted/50 transition-colors ${
+          hasError ? 'border-2 border-red-500' : ''
+        }`}
         onClick={handleToggleDropdown}
         id={id}
         role="button"
@@ -399,10 +285,13 @@ export function LocationSelector({
           }
         }}
       >
-        <div className="text-[13px] text-foreground-500">Select Your Location</div>
+        <div className="text-[13px] text-foreground-500">
+          {label}
+          {isRequired && <span className="text-red-500 ml-1">*</span>}
+        </div>
         <div className="flex items-center justify-between text-foreground-500">
           <span className={`text-md truncate pr-2`}>
-            {displayValue || "Select location"}
+            {displayValue || placeholder}
           </span>
           {displayValue ? (
             <button
@@ -423,31 +312,25 @@ export function LocationSelector({
 
       {isLocationDropdownOpen && (
         <div className="absolute left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
-          {/* Unified Header for both data sources */}
-          {(currentLevel !== "country" || breadcrumbItems.length > 0 || displayValue) && (
+          {/* Header */}
+          {currentLevel !== "country" && (
             <div className="flex items-center justify-between p-2 border-b border-gray-200">
-              {/* Back button - show for both modes when not at country level */}
-              {currentLevel !== "country" ? (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const levels: Level[] = ["country", "division", "district", "upazila"];
-                    const currentIndex = levels.indexOf(currentLevel);
-                    if (currentIndex > 0) {
-                      setCurrentLevel(levels[currentIndex - 1]);
-                    }
-                  }}
-                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-                  aria-label="Go back to previous level"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back
-                </button>
-              ) : (
-                <div></div>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const levels: Level[] = ["country", "division", "district", "upazila"];
+                  const currentIndex = levels.indexOf(currentLevel);
+                  if (currentIndex > 0) {
+                    setCurrentLevel(levels[currentIndex - 1]);
+                  }
+                }}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                aria-label="Go back to previous level"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
 
-              {/* Current level title on the right */}
               <span className="text-sm font-medium text-gray-700">{levelTitles[currentLevel]}</span>
             </div>
           )}
@@ -458,11 +341,7 @@ export function LocationSelector({
                 key={option.value}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (dataSource === "addressData") {
-                    handleLocationSelection(option.value, option.name);
-                  } else {
-                    handleLocationSelection(option.value);
-                  }
+                  handleLocationSelection(option.value);
                 }}
                 className="w-full p-2 text-left rounded-md hover:bg-muted transition-colors flex items-center justify-between"
               >
@@ -481,10 +360,10 @@ export function LocationSelector({
         </div>
       )}
 
-      {/* Error Display for addressData */}
-      {dataSource === "addressData" && errors && (errors[countryKey] || errors[divisionKey] || errors[zillaKey] || errors[upazillaKey]) && (
+      {/* Error Display */}
+      {errorMessage && (
         <p className="text-sm text-red-500 mt-1">
-          {errors[countryKey] || errors[divisionKey] || errors[zillaKey] || errors[upazillaKey]}
+          {errorMessage}
         </p>
       )}
     </div>
