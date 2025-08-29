@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { publicApi } from "@/lib/api-client";
 import { handleApiError } from "@/lib/error-handler";
+import { getImageUrl } from "@/lib/image-service";
 
 interface Biodata {
     id: number;
@@ -553,18 +554,18 @@ export const BiodataSearch = () => {
                                                     biodata.biodataType == "Male" ? (
                                                         <Avatar
                                                             src={biodata.profilePicture ? 
-                                                                `${process.env.NEXT_PUBLIC_API_BASE_URL}${biodata.profilePicture}` : 
+                                                                getImageUrl(biodata.profilePicture) : 
                                                                 "icons/male.png"}
                                                             name={biodata.fullName}
                                                             size="lg"
-                                                            className="w-fit h-fit border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
+                                                            className="w-24 h-24 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
                                                             alt={`Profile picture of ${biodata.fullName}`}
                                                         />
 
                                                     ) : (
                                                         <Avatar
                                                             src={biodata.profilePicture ? 
-                                                                `${process.env.NEXT_PUBLIC_API_BASE_URL}${biodata.profilePicture}` : 
+                                                                getImageUrl(biodata.profilePicture) : 
                                                                 "icons/female.png"}
                                                             name={biodata.fullName}
                                                             size="lg"

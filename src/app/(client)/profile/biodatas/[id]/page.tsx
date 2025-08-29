@@ -15,6 +15,7 @@ import { BiodataProfile, BiodataApprovalStatus, BiodataVisibilityStatus } from "
 import { BiodataStatusHandler } from "@/components/biodata/BiodataStatusHandler";
 import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/error-handler';
+import { resolveImageUrl } from '@/lib/image-service';
 
 // Helper function to safely display data or fallback
 const safeDisplay = (value: unknown, fallback: string = "Not provided"): string => {
@@ -32,6 +33,8 @@ const formatDate = (dateString: string): string => {
     return "Invalid date";
   }
 };
+
+
 
 export default function Profile() {
   const [profile, setProfile] = useState<BiodataProfile | null>(null);
@@ -628,17 +631,22 @@ export default function Profile() {
               {/* Enhanced Profile Picture */}
               <div className="relative">
                 <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center overflow-hidden border-4 border-white/30 shadow-xl">
-                  {profile.profilePicture ? (
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${profile.profilePicture}`}
-                      alt="Profile"
-                      width={128}
-                      height={128}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-16 w-16 text-white" />
-                  )}
+                  {(() => {
+                    const { url, unoptimized } = resolveImageUrl(profile.profilePicture);
+                    if (!url) {
+                      return <User className="h-16 w-16 text-white" />;
+                    }
+                    return (
+                      <Image
+                        src={url || ''}
+                        alt="Profile"
+                        width={128}
+                        height={128}
+                        className="w-full h-full rounded-full object-cover"
+                        unoptimized={unoptimized}
+                      />
+                    );
+                  })()}
                 </div>
                 {/* Online Status Indicator */}
                 <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 rounded-full border-3 border-white shadow-lg"></div>

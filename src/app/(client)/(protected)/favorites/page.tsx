@@ -9,6 +9,7 @@ import { useRegularAuth } from "@/context/RegularAuthContext";
 import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/error-handler';
 import { userApi } from '@/lib/api-client';
+import { getImageUrl } from '@/lib/image-service';
 
 interface Biodata {
     id: number;
@@ -270,7 +271,7 @@ export default function FavoritesPage() {
                                                 <div className="flex items-center gap-3">
                                                     <Avatar
                                                         src={biodata.profilePicture ?
-                                                            `${process.env.NEXT_PUBLIC_API_BASE_URL}${biodata.profilePicture}` :
+                                                            getImageUrl(biodata.profilePicture) :
                                                             (biodata.biodataType === "Male" ? "/icons/male.png" : "/icons/female.png")}
                                                         name={biodata.fullName}
                                                         size="md"

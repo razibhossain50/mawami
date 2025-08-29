@@ -11,6 +11,9 @@ import { useAuth } from "@/context/AuthContext";
 import { logger } from '@/lib/logger';
 import { handleApiError } from '@/lib/error-handler';
 import { adminApi } from '@/lib/api-client';
+import { resolveImageUrl } from '@/lib/image-service';
+
+
 
 type IconSvgProps = SVGProps<SVGSVGElement> & {
     size?: number;
@@ -337,18 +340,24 @@ export default function Biodatas() {
             case "profilePicture":
                 return (
                     <div className="flex items-center justify-center">
-                        {biodata.profilePicture ? (
-                            <img
-                                src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${biodata.profilePicture}`}
-                                alt="Profile"
-                                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                                onError={(e) => {
-                                    // If image fails to load, show placeholder
-                                    e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                }}
-                            />
-                        ) : null}
+                        {(() => {
+                            const { url } = resolveImageUrl(biodata.profilePicture);
+                            if (!url) {
+                                return null;
+                            }
+                            return (
+                                <img
+                                    src={url}
+                                    alt="Profile"
+                                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                                    onError={(e) => {
+                                        // If image fails to load, show placeholder
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                />
+                            );
+                        })()}
                         <div className={`w-10 h-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center ${biodata.profilePicture ? 'hidden' : ''}`}>
                             <User className="w-5 h-5 text-gray-400" />
                         </div>
@@ -904,18 +913,22 @@ export default function Biodatas() {
                                 </div>
 
                                 {/* Profile Picture */}
-                                {selectedBiodata.profilePicture && (
-                                    <div className="bg-white p-4 rounded-lg border">
-                                        <h5 className="font-semibold text-gray-800 mb-3 border-b pb-2">Profile Picture</h5>
-                                        <div className="flex justify-center">
-                                            <img
-                                                src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${selectedBiodata.profilePicture}`}
-                                                alt="Profile"
-                                                className="max-w-xs max-h-64 object-cover rounded-lg shadow-md"
-                                            />
+                                {(() => {
+                                    const { url } = resolveImageUrl(selectedBiodata.profilePicture);
+                                    if (!url) return null;
+                                    return (
+                                        <div className="bg-white p-4 rounded-lg border">
+                                            <h5 className="font-semibold text-gray-800 mb-3 border-b pb-2">Profile Picture</h5>
+                                            <div className="flex justify-center">
+                                                <img
+                                                    src={url}
+                                                    alt="Profile"
+                                                    className="max-w-xs max-h-64 object-cover rounded-lg shadow-md"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
 
                                 {/* Progress Information */}
                                 <div className="bg-white p-4 rounded-lg border">
@@ -1350,18 +1363,22 @@ export default function Biodatas() {
                                 </div>
 
                                 {/* Profile Picture */}
-                                {selectedBiodata.profilePicture && (
-                                    <div className="bg-white p-4 rounded-lg border">
-                                        <h5 className="font-semibold text-gray-800 mb-3 border-b pb-2">Profile Picture</h5>
-                                        <div className="flex justify-center">
-                                            <img
-                                                src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${selectedBiodata.profilePicture}`}
-                                                alt="Profile"
-                                                className="max-w-xs max-h-64 object-cover rounded-lg shadow-md"
-                                            />
+                                {(() => {
+                                    const { url } = resolveImageUrl(selectedBiodata.profilePicture);
+                                    if (!url) return null;
+                                    return (
+                                        <div className="bg-white p-4 rounded-lg border">
+                                            <h5 className="font-semibold text-gray-800 mb-3 border-b pb-2">Profile Picture</h5>
+                                            <div className="flex justify-center">
+                                                <img
+                                                    src={url}
+                                                    alt="Profile"
+                                                    className="max-w-xs max-h-64 object-cover rounded-lg shadow-md"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    );
+                                })()}
 
                                 {/* Progress Information */}
                                 <div className="bg-white p-4 rounded-lg border">

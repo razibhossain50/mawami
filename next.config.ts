@@ -10,6 +10,23 @@ const nextConfig: NextConfig = {
         port: '2000',
         pathname: '/uploads/**',
       },
+      // Allow common Cloudflare R2 public bucket hostnames (adjust as needed)
+      {
+        protocol: 'https',
+        hostname: '**.r2.cloudflarestorage.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.r2.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-*.r2.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.cloudflare-ipfs.com',
+      },
     ],
   },
   async rewrites() {
